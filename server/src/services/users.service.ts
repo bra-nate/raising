@@ -88,11 +88,11 @@ async function updateUser(actorId: string, id: string, input: UpdateUserInput) {
 
   const user = await prisma.user.update({ where: { id }, data, select: PUBLIC_FIELDS });
 
-  // A role change is an audit-relevant settings-style event.
+  // A role change is an audit-relevant event.
   if (data.role !== undefined && data.role !== target.role) {
     await writeLog({
       userId: actorId,
-      action: 'updated_settings',
+      action: 'changed_user_role',
       entityType: 'user',
       entityId: user.id,
       metadata: { field: 'role', from: target.role, to: data.role },
