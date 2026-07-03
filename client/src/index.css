@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────
+   Semantic design tokens (Relate-derived).
+   Light values on :root, dark overrides on .dark.
+   Components reference these via Tailwind color
+   utilities (bg-surface, text-ink, …) so the whole
+   UI is theme-correct without per-component logic.
+   ───────────────────────────────────────────── */
+:root {
+  --canvas: #fcfcfc; /* page background — paper, not pure white */
+  --surface: #ffffff; /* cards, elevated content */
+  --surface-2: #f6f7fb; /* recessed / hover fills */
+  --wash: #f0f4fe; /* tinted sections, active nav pill */
+  --hairline: #ececf0; /* dividers */
+  --border: #cfcfcf; /* input borders */
+
+  --ink: #020520; /* primary text (midnight, slight violet) */
+  --ink-2: #14141e; /* strong headings / body */
+  --slate: #374151; /* nav + UI labels */
+  --muted: #696a72; /* secondary text */
+  --faint: #95959b; /* placeholders, metadata */
+
+  --accent: #145aff; /* highlighter blue — text & focus only */
+  --accent-soft: rgba(20, 90, 255, 0.1);
+  --focus-ring: rgba(0, 153, 255, 0.9);
+
+  --action: #0f1f3d; /* outlined action border */
+  --action-ink: #0f1f3d; /* outlined action text */
+
+  --shadow-card: rgba(0, 0, 0, 0.1) 0px 0px 4px -2px;
+  --shadow-elevated: rgba(0, 0, 0, 0.25) 0px 0px 4px -2px;
+  --shadow-feature: rgba(0, 0, 0, 0.082) 0px 0.36px 1.81px -1.42px,
+    rgba(0, 0, 0, 0.07) 0px 1.37px 6.87px -2.83px, rgba(0, 0, 0, 0.016) 0px 6px 30px -4.25px;
+}
+
+.dark {
+  --canvas: #05060f; /* deep violet-navy, near #000714 */
+  --surface: #0d1122; /* lifted card */
+  --surface-2: #12172b; /* hover / recessed */
+  --wash: #17203c; /* tinted / active nav pill */
+  --hairline: #1c2237; /* dividers */
+  --border: #29314c; /* input borders */
+
+  --ink: #f3f5fb;
+  --ink-2: #e7eaf3;
+  --slate: #b6bccb;
+  --muted: #8b91a4;
+  --faint: #626a80;
+
+  --accent: #5b8bff; /* lifted for contrast on navy */
+  --accent-soft: rgba(91, 139, 255, 0.14);
+  --focus-ring: rgba(59, 130, 246, 0.9);
+
+  --action: #2b3454;
+  --action-ink: #e7eaf3;
+
+  --shadow-card: rgba(0, 0, 0, 0.45) 0px 0px 6px -2px;
+  --shadow-elevated: rgba(0, 0, 0, 0.6) 0px 0px 8px -2px;
+  --shadow-feature: rgba(0, 0, 0, 0.5) 0px 1.37px 6.87px -2.83px, rgba(0, 0, 0, 0.35) 0px 6px 30px -4.25px;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+    font-size: 14px;
+    line-height: 1.43;
+    letter-spacing: 0.06px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--accent-soft);
+  }
+}
+
+/* Hero radial wash — soft blue bloom (light) / deep navy glow (dark) */
+.hero-wash {
+  background:
+    radial-gradient(120% 90% at 50% -10%, #dbe4ff 0%, #eef2fe 34%, var(--canvas) 68%);
+}
+.dark .hero-wash {
+  background:
+    radial-gradient(120% 90% at 50% -10%, #1c2748 0%, #0a0e1e 46%, var(--canvas) 74%);
+}
+
+/* Filled gradient — the single high-emphasis CTA fill (used sparingly). */
+.btn-gradient {
+  background: linear-gradient(rgb(59, 130, 246) 0%, rgb(20, 90, 255) 100%);
+}

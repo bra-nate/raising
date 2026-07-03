@@ -1,0 +1,271 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  pastor
+  leader
+  followup_team_lead
+  followup_team_member
+}
+
+enum StatusTag {
+  good
+  needs_attention
+  concern
+}
+
+enum FirstTimerStatus {
+  pending
+  contacted
+  interested
+  not_interested
+  converted
+}
+
+enum CallOutcome {
+  answered
+  no_answer
+  callback_requested
+  interested
+  not_interested
+}
+
+enum ServiceType {
+  sunday_service
+  midweek
+  special_event
+  other
+}
+
+enum ActivityAction {
+  submitted_member_report
+  submitted_first_timer_report
+  added_member
+  updated_member
+  converted_first_timer
+  viewed_confidential_report
+  redacted_report
+  deleted_report
+  created_user
+  deactivated_user
+  updated_settings
+}
+
+enum EntityType {
+  member
+  first_timer
+  member_report
+  first_timer_report
+  user
+  settings
+}
+
+enum NotificationType {
+  report_due
+  member_unreported
+  safety_flag
+  first_timer_assigned
+}
+
+enum DeletePermission {
+  pastor_only
+  leaders
+}
+
+enum ReminderDay {
+  monday
+  tuesday
+  wednesday
+  thursday
+  friday
+  saturday
+  sunday
+}
+
+// ─────────────────────────────────────────────
+// MODELS
+// ─────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(uuid())
+  fullName  String
+  email     String   @unique
+  password  String // bcrypt hash
+  role      UserRole
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  assignedMembers     Member[]           @relation("AssignedLeader")
+  createdMembers      Member[]           @relation("CreatedBy")
+  memberReports       MemberReport[]     @relation("ReportedBy")
+  redactedReports     MemberReport[]     @relation("RedactedBy")
+  assignedFirstTimers FirstTimer[]       @relation("AssignedTo")
+  ledFirstTimers      FirstTimer[]       @relation("TeamLead")
+  firstTimerReports   FirstTimerReport[]
+  activityLogs        ActivityLog[]
+  notifications       Notification[]
+  updatedSettings     Setting[]
+  groups              Group[]
+
+  @@map("users")
+}
+
+model Group {
+  id        String   @id @default(uuid())
+  name      String
+  leaderId  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  leader  User     @relation(fields: [leaderId], references: [id])
+  members Member[]
+
+  @@map("groups")
+}
+
+model Member {
+  id                        String    @id @default(uuid())
+  firstName                 String
+  lastName                  String
+  phone                     String?
+  email                     String?
+  address                   String?
+  assignedLeaderId          String
+  groupId                   String?
+  lastReportDate            DateTime?
+  isActive                  Boolean   @default(true)
+  createdById               String
+  convertedFromFirstTimerId String?   @unique
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  // Relations
+  assignedLeader          User           @relation("AssignedLeader", fields: [assignedLeaderId], references: [id])
+  group                   Group?         @relation(fields: [groupId], references: [id])
+  createdBy               User           @relation("CreatedBy", fields: [createdById], references: [id])
+  convertedFromFirstTimer FirstTimer?    @relation(fields: [convertedFromFirstTimerId], references: [id])
+  reports                 MemberReport[]
+
+  @@map("members")
+}
+
+model MemberReport {
+  id               String    @id @default(uuid())
+  memberId         String
+  leaderId         String
+  statusTag        StatusTag
+  content          String
+  isConfidential   Boolean   @default(false)
+  isSafetyFlagged  Boolean   @default(false)
+  redactedAt       DateTime?
+  redactedById     String?
+  redactionSummary String?
+  createdAt        DateTime  @default(now())
+
+  // Relations
+  member     Member @relation(fields: [memberId], references: [id])
+  leader     User   @relation("ReportedBy", fields: [leaderId], references: [id])
+  redactedBy User?  @relation("RedactedBy", fields: [redactedById], references: [id])
+
+  @@map("member_reports")
+}
+
+model FirstTimer {
+  id                String           @id @default(uuid())
+  firstName         String
+  lastName          String
+  phone             String?
+  email             String?
+  address           String?
+  visitDate         DateTime
+  serviceType       ServiceType?
+  assignedToId      String?
+  teamLeadId        String?
+  status            FirstTimerStatus @default(pending)
+  convertedAt       DateTime?
+  convertedMemberId String?
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Relations
+  assignedTo      User?              @relation("AssignedTo", fields: [assignedToId], references: [id])
+  teamLead        User?              @relation("TeamLead", fields: [teamLeadId], references: [id])
+  convertedMember Member? // back-relation via Member.convertedFromFirstTimerId
+  reports         FirstTimerReport[]
+
+  @@map("first_timers")
+}
+
+model FirstTimerReport {
+  id           String      @id @default(uuid())
+  firstTimerId String
+  reportedById String
+  callOutcome  CallOutcome
+  content      String?
+  createdAt    DateTime    @default(now())
+
+  // Relations
+  firstTimer FirstTimer @relation(fields: [firstTimerId], references: [id])
+  reportedBy User       @relation(fields: [reportedById], references: [id])
+
+  @@map("first_timer_reports")
+}
+
+model ActivityLog {
+  id         String         @id @default(uuid())
+  userId     String
+  action     ActivityAction
+  entityType EntityType
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime       @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("activity_logs")
+}
+
+model Notification {
+  id         String           @id @default(uuid())
+  userId     String
+  type       NotificationType
+  title      String
+  message    String
+  isRead     Boolean          @default(false)
+  entityType String?
+  entityId   String?
+  createdAt  DateTime         @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model Setting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  updatedBy User? @relation(fields: [updatedById], references: [id])
+
+  @@map("settings")
+}
