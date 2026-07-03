@@ -22,7 +22,4 @@ export const config = {
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
-  superadminEmail: process.env.SUPERADMIN_EMAIL || '',
-  superadminPassword: process.env.SUPERADMIN_PASSWORD || '',
-  superadminName: process.env.SUPERADMIN_NAME || 'Super Admin',
 } as const;

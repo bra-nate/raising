@@ -37,8 +37,9 @@ interface ListLogsOpts {
 }
 
 async function listLogs(opts: ListLogsOpts = {}) {
-  const page = Math.max(1, opts.page ?? 1);
-  const pageSize = Math.min(100, Math.max(1, opts.pageSize ?? 25));
+  const page = Number.isFinite(opts.page) && (opts.page as number) >= 1 ? Math.floor(opts.page as number) : 1;
+  const rawSize = Number.isFinite(opts.pageSize) ? Math.floor(opts.pageSize as number) : 25;
+  const pageSize = Math.min(100, Math.max(1, rawSize));
 
   const where: Prisma.ActivityLogWhereInput = {};
   if (opts.action) where.action = opts.action as ActivityAction;

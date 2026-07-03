@@ -54,7 +54,7 @@ async function listReports(user: JwtPayload, memberId: string) {
     await writeLog({
       userId: user.id,
       action: 'viewed_confidential_report',
-      entityType: 'member_report',
+      entityType: 'member',
       entityId: memberId,
       metadata: { memberId, reportIds: confidentialViewed.map((r) => r.id) },
     });
