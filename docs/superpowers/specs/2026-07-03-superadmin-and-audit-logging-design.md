@@ -79,9 +79,8 @@ The `writeLog()` contract is unchanged: called inside the triggering service fun
 
 ### 2d. Login-event logging
 
-- Add enum value `logged_in` (and `login_failed` for failed attempts) to `ActivityAction`.
-- `auth.service.ts login()` calls `writeLog` on success (`logged_in`) and on failed attempts (`login_failed`, metadata `{ email }`, no user relation required — see note).
-- **Note:** failed logins may have no valid `userId`. Either allow `userId` nullable for these rows or record the attempted email in metadata with a system/actor convention. Implementation plan resolves the exact schema treatment.
+- Add enum value `logged_in` to `ActivityAction`.
+- `auth.service.ts login()` calls `writeLog` on **successful** login only (`logged_in`, actor = the authenticated user). Failed attempts are **not** logged — avoids table bloat and every row has a valid `userId`.
 
 ### 2e. Role-change logging fix
 
@@ -91,7 +90,6 @@ The `writeLog()` contract is unchanged: called inside the triggering service fun
 ### Enum additions summary (`ActivityAction`)
 
 - `logged_in`
-- `login_failed`
 - `changed_user_role`
 
 (`viewed_confidential_report` and `updated_settings` already exist.)
@@ -107,6 +105,7 @@ The `writeLog()` contract is unchanged: called inside the triggering service fun
   - Users management (create/edit/deactivate, role selector includes `superadmin`).
   - Settings editor.
   - **Logs page** — paginated, filterable table backed by `/activity-log`.
+- **Dashboard logs panel:** both the **pastor dashboard** and the **superadmin dashboard** show a recent-activity/logs panel (e.g. latest N entries from `/activity-log`) with a link to the full Logs page. Build a shared `RecentActivityPanel` component (`client/src/components/dashboard/`) consuming `/activity-log`, reused by both dashboards.
 - Types (`client/src/types/index.ts`): add `superadmin` to the role union; add ActivityLog types if not present.
 
 ---
