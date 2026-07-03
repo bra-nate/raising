@@ -48,6 +48,18 @@ async function listReports(user: JwtPayload, memberId: string) {
     orderBy: { createdAt: 'desc' },
   });
 
+  // Audit: record when a user retrieves confidential reports they did not author.
+  const confidentialViewed = data.filter((r) => r.isConfidential && r.leaderId !== user.id);
+  if (confidentialViewed.length > 0) {
+    await writeLog({
+      userId: user.id,
+      action: 'viewed_confidential_report',
+      entityType: 'member_report',
+      entityId: memberId,
+      metadata: { memberId, reportIds: confidentialViewed.map((r) => r.id) },
+    });
+  }
+
   return { data, total: data.length };
 }
 
