@@ -13,7 +13,7 @@ const PUBLIC_FIELDS = {
   createdAt: true,
 } as const;
 
-const VALID_ROLES: UserRole[] = ['pastor', 'leader', 'followup_team_lead', 'followup_team_member'];
+const VALID_ROLES: UserRole[] = ['superadmin', 'pastor', 'leader', 'followup_team_lead', 'followup_team_member'];
 
 async function listUsers() {
   const data = await prisma.user.findMany({

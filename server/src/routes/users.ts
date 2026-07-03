@@ -6,8 +6,8 @@ import { asyncHandler } from '../lib/asyncHandler';
 
 const router = Router();
 
-// All user-management routes are pastor-only.
-router.use(authenticate, requireRole('pastor'));
+// All user-management routes are pastor or superadmin.
+router.use(authenticate, requireRole('pastor', 'superadmin'));
 
 router.get(
   '/',
