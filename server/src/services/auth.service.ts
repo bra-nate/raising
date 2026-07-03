@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { prisma } from '../lib/prisma';
 import { signToken } from '../lib/jwt';
 import { AppError } from '../lib/errors';
+import { writeLog } from './activity-log.service';
 
 export interface AuthUser {
   id: string;
@@ -32,6 +33,12 @@ async function login(email: string, password: string): Promise<LoginResult> {
   if (!match) throw genericFailure;
 
   const token = signToken({ id: user.id, role: user.role });
+  await writeLog({
+    userId: user.id,
+    action: 'logged_in',
+    entityType: 'user',
+    entityId: user.id,
+  });
   return {
     token,
     user: { id: user.id, fullName: user.fullName, email: user.email, role: user.role },

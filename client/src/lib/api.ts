@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { ApiList, AuthUser, Member, MemberReport, StatusTag, User, UserRole } from '../types';
+import type { ActivityLog, ApiList, AuthUser, Member, MemberReport, StatusTag, User, UserRole } from '../types';
 
 const TOKEN_KEY = 'sl_token';
 
@@ -119,5 +119,27 @@ export interface MemberReportInput {
 
 export async function createMemberReport(input: MemberReportInput): Promise<MemberReport> {
   const { data } = await api.post('/member-reports', input);
+  return data;
+}
+
+// ── Activity Log (pastor + superadmin) ────────
+export async function listActivityLog(params?: {
+  page?: number;
+  pageSize?: number;
+  action?: string;
+  userId?: string;
+}): Promise<ApiList<ActivityLog>> {
+  const { data } = await api.get('/activity-log', { params });
+  return data;
+}
+
+// ── Settings (read all; write pastor + superadmin) ──
+export async function getSettings(): Promise<Record<string, string>> {
+  const { data } = await api.get('/settings');
+  return data.data;
+}
+
+export async function updateSetting(key: string, value: string): Promise<{ key: string; value: string }> {
+  const { data } = await api.put(`/settings/${key}`, { value });
   return data;
 }

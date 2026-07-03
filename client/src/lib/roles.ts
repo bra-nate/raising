@@ -3,6 +3,8 @@ import type { UserRole } from '../types';
 // The dashboard root path for each role.
 export function homePathForRole(role: UserRole): string {
   switch (role) {
+    case 'superadmin':
+      return '/admin';
     case 'pastor':
       return '/pastor';
     case 'leader':
@@ -16,6 +18,7 @@ export function homePathForRole(role: UserRole): string {
 }
 
 export const roleLabels: Record<UserRole, string> = {
+  superadmin: 'Super Admin',
   pastor: 'Pastor',
   leader: 'Leader',
   followup_team_lead: 'Follow-Up Team Lead',

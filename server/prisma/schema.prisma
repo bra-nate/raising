@@ -12,6 +12,7 @@ datasource db {
 // ─────────────────────────────────────────────
 
 enum UserRole {
+  superadmin
   pastor
   leader
   followup_team_lead
@@ -59,6 +60,8 @@ enum ActivityAction {
   created_user
   deactivated_user
   updated_settings
+  logged_in
+  changed_user_role
 }
 
 enum EntityType {

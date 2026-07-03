@@ -18,6 +18,18 @@ export interface NavGroup {
 // so the shell reads as a real product rather than a stub.
 export function navForRole(role: UserRole): NavGroup[] {
   switch (role) {
+    case 'superadmin':
+      return [
+        { items: [{ label: 'Dashboard', to: '/admin', icon: IconGrid }] },
+        {
+          heading: 'Admin',
+          items: [
+            { label: 'Users', to: '/admin/users', icon: IconUsers },
+            { label: 'Activity Log', to: '/admin/logs', icon: IconActivity },
+            { label: 'Settings', to: '/admin/settings', icon: IconSettings },
+          ],
+        },
+      ];
     case 'pastor':
       return [
         { items: [{ label: 'Dashboard', to: '/pastor', icon: IconGrid }] },
@@ -32,8 +44,8 @@ export function navForRole(role: UserRole): NavGroup[] {
           heading: 'Admin',
           items: [
             { label: 'Users', to: '/pastor/users', icon: IconUsers },
-            { label: 'Activity Log', icon: IconActivity, phase: 5 },
-            { label: 'Settings', icon: IconSettings, phase: 5 },
+            { label: 'Activity Log', to: '/pastor/logs', icon: IconActivity },
+            { label: 'Settings', to: '/pastor/settings', icon: IconSettings },
           ],
         },
       ];
