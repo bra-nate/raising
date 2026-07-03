@@ -30,6 +30,29 @@ async function main() {
     },
   });
 
+  // Optional superadmin bootstrap — only when env vars are provided. Idempotent.
+  const saEmail = process.env.SUPERADMIN_EMAIL?.toLowerCase().trim();
+  const saPassword = process.env.SUPERADMIN_PASSWORD;
+  if (saEmail && saPassword) {
+    const existing = await prisma.user.findFirst({ where: { role: 'superadmin' } });
+    if (existing) {
+      console.log(`Superadmin already exists (${existing.email}); skipping.`);
+    } else {
+      const saHash = await bcrypt.hash(saPassword, 12);
+      const created = await prisma.user.create({
+        data: {
+          fullName: process.env.SUPERADMIN_NAME?.trim() || 'Super Admin',
+          email: saEmail,
+          password: saHash,
+          role: 'superadmin',
+        },
+      });
+      console.log(`Superadmin created: ${created.email}`);
+    }
+  } else {
+    console.log('SUPERADMIN_EMAIL/PASSWORD not set; skipping superadmin bootstrap.');
+  }
+
   console.log('Seed complete. Pastor login: pastor@raising.local / changeme123');
 }
 
