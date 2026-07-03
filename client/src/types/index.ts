@@ -1,4 +1,4 @@
-export type UserRole = 'pastor' | 'leader' | 'followup_team_lead' | 'followup_team_member';
+export type UserRole = 'superadmin' | 'pastor' | 'leader' | 'followup_team_lead' | 'followup_team_member';
 export type StatusTag = 'good' | 'needs_attention' | 'concern';
 export type FirstTimerStatus = 'pending' | 'contacted' | 'interested' | 'not_interested' | 'converted';
 export type CallOutcome = 'answered' | 'no_answer' | 'callback_requested' | 'interested' | 'not_interested';
