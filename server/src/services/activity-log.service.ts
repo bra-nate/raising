@@ -29,4 +29,33 @@ export async function writeLog(args: WriteLogArgs): Promise<void> {
   });
 }
 
-export const activityLogService = { writeLog };
+interface ListLogsOpts {
+  page?: number;
+  pageSize?: number;
+  action?: string;
+  userId?: string;
+}
+
+async function listLogs(opts: ListLogsOpts = {}) {
+  const page = Math.max(1, opts.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, opts.pageSize ?? 25));
+
+  const where: Prisma.ActivityLogWhereInput = {};
+  if (opts.action) where.action = opts.action as ActivityAction;
+  if (opts.userId) where.userId = opts.userId;
+
+  const [rows, total] = await prisma.$transaction([
+    prisma.activityLog.findMany({
+      where,
+      include: { user: { select: { fullName: true } } },
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.activityLog.count({ where }),
+  ]);
+
+  return { data: rows, total };
+}
+
+export const activityLogService = { writeLog, listLogs };
