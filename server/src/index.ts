@@ -5,6 +5,7 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import memberRoutes from './routes/members';
 import memberReportRoutes from './routes/member-reports';
+import settingsRoutes from './routes/settings';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -22,6 +23,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/members', memberRoutes);
 app.use('/api/v1/member-reports', memberReportRoutes);
+app.use('/api/v1/settings', settingsRoutes);
 
 // 404 for unmatched routes
 app.use((_req, res) => {
