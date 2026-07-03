@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { ApiList, AuthUser, User, UserRole } from '../types';
+import type { ApiList, AuthUser, Member, MemberReport, StatusTag, User, UserRole } from '../types';
 
 const TOKEN_KEY = 'sl_token';
 
@@ -70,5 +70,54 @@ export async function updateUser(id: string, input: { fullName?: string; role?: 
 
 export async function deactivateUser(id: string): Promise<User> {
   const { data } = await api.patch(`/users/${id}/deactivate`);
+  return data;
+}
+
+// ── Members ───────────────────────────────────
+export async function listMembers(): Promise<ApiList<Member>> {
+  const { data } = await api.get('/members');
+  return data;
+}
+
+export async function getMember(id: string): Promise<Member> {
+  const { data } = await api.get(`/members/${id}`);
+  return data;
+}
+
+export interface MemberInput {
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  assignedLeaderId?: string;
+}
+
+export async function createMember(input: MemberInput): Promise<Member> {
+  const { data } = await api.post('/members', input);
+  return data;
+}
+
+export async function updateMember(id: string, input: Partial<MemberInput>): Promise<Member> {
+  const { data } = await api.patch(`/members/${id}`, input);
+  return data;
+}
+
+// ── Member Reports ────────────────────────────
+export async function listMemberReports(memberId: string): Promise<ApiList<MemberReport>> {
+  const { data } = await api.get('/member-reports', { params: { memberId } });
+  return data;
+}
+
+export interface MemberReportInput {
+  memberId: string;
+  statusTag: StatusTag;
+  content: string;
+  isConfidential?: boolean;
+  isSafetyFlagged?: boolean;
+}
+
+export async function createMemberReport(input: MemberReportInput): Promise<MemberReport> {
+  const { data } = await api.post('/member-reports', input);
   return data;
 }

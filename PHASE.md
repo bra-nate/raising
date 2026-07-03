@@ -63,30 +63,30 @@ Each phase is a complete, usable vertical slice. Start a new Claude Code session
 *Target: Leaders can manage their members and submit reports*
 
 ### 2.1 Member API
-- [ ] `GET /api/v1/members`: leader → own members only (`assignedLeaderId = req.user.id`); pastor → all; includes silence status derived from `lastReportDate` vs settings threshold
-- [ ] `POST /api/v1/members`: insert member with `assignedLeaderId = req.user.id` (or provided if pastor); log `added_member`
-- [ ] `GET /api/v1/members/:id`: leader → 403 if not their member; pastor → any
-- [ ] `PATCH /api/v1/members/:id`: same scope guard; log `updated_member`
-- [ ] `PATCH /api/v1/members/:id/deactivate`: pastor only
-- [ ] Settings read helper: `settingsService.get('reportThresholdDays')` — used in silence calculation
+- [x] `GET /api/v1/members`: leader → own members only (`assignedLeaderId = req.user.id`); pastor → all; includes silence status derived from `lastReportDate` vs settings threshold
+- [x] `POST /api/v1/members`: insert member with `assignedLeaderId = req.user.id` (or provided if pastor); log `added_member`
+- [x] `GET /api/v1/members/:id`: leader → 403 if not their member; pastor → any
+- [x] `PATCH /api/v1/members/:id`: same scope guard; log `updated_member`
+- [x] `PATCH /api/v1/members/:id/deactivate`: pastor only
+- [x] Settings read helper: `settingsService.get('reportThresholdDays')` — used in silence calculation
 
 ### 2.2 Member Report API
-- [ ] `GET /api/v1/member-reports?memberId=`: leader → own reports + non-confidential reports on their members (see DATA.md query); pastor → all
-- [ ] `POST /api/v1/member-reports`: validate member belongs to leader; insert report; update `member.lastReportDate` in same Prisma transaction; log `submitted_member_report`; if `isSafetyFlagged`, call notification service (create notification row + send email to pastor)
-- [ ] `PATCH /api/v1/member-reports/:id/redact`: check `isSafetyFlagged` (403 if true); check settings permission; update content to `[Redacted]`; log `redacted_report`
-- [ ] `DELETE /api/v1/member-reports/:id`: check `isSafetyFlagged` (403 if true); check settings; log `deleted_report` before deletion
+- [x] `GET /api/v1/member-reports?memberId=`: leader → own reports + non-confidential reports on their members (see DATA.md query); pastor → all
+- [x] `POST /api/v1/member-reports`: validate member belongs to leader; insert report; update `member.lastReportDate` in same Prisma transaction; log `submitted_member_report`; if `isSafetyFlagged`, call notification service (create notification row + send email to pastor)
+- [x] `PATCH /api/v1/member-reports/:id/redact`: check `isSafetyFlagged` (403 if true); check settings permission; update content to `[Redacted]`; log `redacted_report`
+- [x] `DELETE /api/v1/member-reports/:id`: check `isSafetyFlagged` (403 if true); check settings; log `deleted_report` before deletion
 
 ### 2.3 Settings Service
-- [ ] `settingsService.getAll()`: return all settings as key-value object
-- [ ] `settingsService.get(key)`: return single setting value
-- [ ] Settings are read on each request that needs them (no in-process cache needed at this scale)
+- [x] `settingsService.getAll()`: return all settings as key-value object
+- [x] `settingsService.get(key)`: return single setting value
+- [x] Settings are read on each request that needs them (no in-process cache needed at this scale)
 
 ### 2.4 Leader Frontend
-- [ ] `/leader` dashboard: member grid cards — name, status tag badge, last report date, silence indicator (amber/red dot), "Add Report" button
-- [ ] `/leader/members` list: sortable table with silence column
-- [ ] `/leader/members/new`: add member form
-- [ ] `/leader/members/:id`: member profile — details, report timeline, "Add Report" button
-- [ ] Report modal: status tag (radio), content (textarea), confidential toggle, safety flag checkbox
+- [x] `/leader` dashboard: member grid cards — name, status tag badge, last report date, silence indicator (amber/red dot), "Add Report" button
+- [x] `/leader/members` list: sortable table with silence column
+- [x] `/leader/members/new`: add member form
+- [x] `/leader/members/:id`: member profile — details, report timeline, "Add Report" button
+- [x] Report modal: status tag (radio), content (textarea), confidential toggle, safety flag checkbox
 
 **Phase 2 exit criteria:** Leader adds a member, submits a report with Good / Needs Attention / Concern, sees the silence indicator. A safety-flagged report creates a notification for the pastor.
 

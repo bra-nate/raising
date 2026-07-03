@@ -8,6 +8,9 @@ import Login from './pages/Login';
 import PastorDashboard from './pages/pastor/Dashboard';
 import PastorUsers from './pages/pastor/Users';
 import LeaderDashboard from './pages/leader/Dashboard';
+import LeaderMembers from './pages/leader/Members';
+import LeaderMemberNew from './pages/leader/MemberNew';
+import LeaderMemberProfile from './pages/leader/MemberProfile';
 import FollowUpDashboard from './pages/followup/Dashboard';
 
 // Send authenticated users to their role home; everyone else to login.
@@ -49,6 +52,30 @@ export default function App() {
               element={
                 <RequireRole roles={['leader']}>
                   <LeaderDashboard />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/leader/members"
+              element={
+                <RequireRole roles={['leader']}>
+                  <LeaderMembers />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/leader/members/new"
+              element={
+                <RequireRole roles={['leader']}>
+                  <LeaderMemberNew />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/leader/members/:id"
+              element={
+                <RequireRole roles={['leader']}>
+                  <LeaderMemberProfile />
                 </RequireRole>
               }
             />

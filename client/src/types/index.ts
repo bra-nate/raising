@@ -3,6 +3,7 @@ export type StatusTag = 'good' | 'needs_attention' | 'concern';
 export type FirstTimerStatus = 'pending' | 'contacted' | 'interested' | 'not_interested' | 'converted';
 export type CallOutcome = 'answered' | 'no_answer' | 'callback_requested' | 'interested' | 'not_interested';
 export type NotificationType = 'report_due' | 'member_unreported' | 'safety_flag' | 'first_timer_assigned';
+export type SilenceStatus = 'ok' | 'overdue' | 'significant';
 
 export interface AuthUser {
   id: string;
@@ -36,6 +37,9 @@ export interface Member {
   convertedFromFirstTimerId?: string;
   convertedFromFirstTimer?: { visitDate: string };
   createdAt: string;
+  // Computed server-side — never derived on the frontend.
+  silence?: SilenceStatus;
+  latestStatus?: StatusTag | null;
 }
 
 export interface MemberReport {

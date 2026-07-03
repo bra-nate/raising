@@ -1,6 +1,6 @@
 import type { ComponentType, SVGProps } from 'react';
 import type { UserRole } from '../types';
-import { IconGrid, IconUsers, IconPeople, IconReports, IconPhone, IconActivity, IconSettings } from '../components/ui/icons';
+import { IconGrid, IconUsers, IconPeople, IconPhone, IconActivity, IconSettings } from '../components/ui/icons';
 
 export interface NavItem {
   label: string;
@@ -42,10 +42,7 @@ export function navForRole(role: UserRole): NavGroup[] {
         { items: [{ label: 'Dashboard', to: '/leader', icon: IconGrid }] },
         {
           heading: 'Care',
-          items: [
-            { label: 'My Members', icon: IconPeople, phase: 2 },
-            { label: 'Reports', icon: IconReports, phase: 2 },
-          ],
+          items: [{ label: 'My Members', to: '/leader/members', icon: IconPeople }],
         },
       ];
     case 'followup_team_lead':

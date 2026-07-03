@@ -3,6 +3,8 @@ import cors from 'cors';
 import { config } from './config';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
+import memberRoutes from './routes/members';
+import memberReportRoutes from './routes/member-reports';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -18,6 +20,8 @@ app.get('/api/v1/health', (_req, res) => {
 // Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/members', memberRoutes);
+app.use('/api/v1/member-reports', memberReportRoutes);
 
 // 404 for unmatched routes
 app.use((_req, res) => {
