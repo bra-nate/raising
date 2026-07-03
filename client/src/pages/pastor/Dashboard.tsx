@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
+import { RecentActivityPanel } from '../../components/dashboard/RecentActivityPanel';
 import { useAuth } from '../../hooks/useAuth';
 import { IconUsers, IconPeople, IconPhone } from '../../components/ui/icons';
 
@@ -37,6 +38,10 @@ export default function PastorDashboard() {
         <RoadmapCard icon={IconPhone} title="First-Timers" phase={4}>
           Track follow-up calls and conversions to the congregation.
         </RoadmapCard>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <RecentActivityPanel viewAllTo="/pastor/logs" />
       </div>
     </AppShell>
   );

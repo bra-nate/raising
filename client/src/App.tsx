@@ -7,6 +7,9 @@ import { homePathForRole } from './lib/roles';
 import Login from './pages/Login';
 import PastorDashboard from './pages/pastor/Dashboard';
 import PastorUsers from './pages/pastor/Users';
+import AdminDashboard from './pages/admin/Dashboard';
+import AdminLogs from './pages/admin/Logs';
+import AdminSettings from './pages/admin/Settings';
 import LeaderDashboard from './pages/leader/Dashboard';
 import LeaderMembers from './pages/leader/Members';
 import LeaderMemberNew from './pages/leader/MemberNew';
@@ -42,6 +45,56 @@ export default function App() {
               element={
                 <RequireRole roles={['pastor']}>
                   <PastorUsers />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/pastor/logs"
+              element={
+                <RequireRole roles={['pastor']}>
+                  <AdminLogs />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/pastor/settings"
+              element={
+                <RequireRole roles={['pastor']}>
+                  <AdminSettings />
+                </RequireRole>
+              }
+            />
+
+            {/* Superadmin */}
+            <Route
+              path="/admin"
+              element={
+                <RequireRole roles={['superadmin']}>
+                  <AdminDashboard />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <RequireRole roles={['superadmin']}>
+                  <PastorUsers />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/admin/logs"
+              element={
+                <RequireRole roles={['superadmin']}>
+                  <AdminLogs />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <RequireRole roles={['superadmin']}>
+                  <AdminSettings />
                 </RequireRole>
               }
             />
