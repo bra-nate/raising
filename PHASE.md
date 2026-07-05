@@ -96,17 +96,17 @@ Each phase is a complete, usable vertical slice. Start a new Claude Code session
 *Target: Pastor has full visibility across all members and reports*
 
 ### 3.1 Pastor Member Frontend
-- [ ] `/pastor/members`: all members, filter by leader/group/status/silence, search, CSV export button
-- [ ] `/pastor/members/new`: add member (can assign to any leader)
-- [ ] `/pastor/members/:id`: full report history including confidential (lock icon); log `viewed_confidential_report` when a confidential report card is opened (PATCH call to a `/activity-log` internal endpoint or inline in the GET)
-- [ ] Redact button per report (non-safety-flagged): confirm modal with redaction summary field
-- [ ] Delete button (if settings permit): confirm modal
+- [x] `/pastor/members`: all members, filter by leader/group/status/silence, search, CSV export button
+- [x] `/pastor/members/new`: add member (can assign to any leader)
+- [x] `/pastor/members/:id`: full report history including confidential (lock icon); log `viewed_confidential_report` when a confidential report card is opened (PATCH call to a `/activity-log` internal endpoint or inline in the GET)
+- [x] Redact button per report (non-safety-flagged): confirm modal with redaction summary field
+- [x] Delete button (if settings permit): confirm modal
 
 ### 3.2 Pastor Dashboard
-- [ ] `GET /api/v1/dashboard/pastor`: returns all six stat card values + silence list + recent 20 reports
+- [x] `GET /api/v1/dashboard/pastor`: returns all six stat card values + silence list + recent 20 reports
   - Silence list: members where `lastReportDate` is null or `now - lastReportDate > threshold`
   - Keep this as a single dedicated endpoint — not assembled on the frontend from multiple calls
-- [ ] `/pastor` page: six stat cards, silence panel, recent reports feed
+- [x] `/pastor` page: six stat cards, silence panel, recent reports feed
 
 **Phase 3 exit criteria:** Pastor sees all members and reports. Silence panel is accurate. Redact action replaces content, retains row. Dashboard stats are correct.
 

@@ -26,6 +26,18 @@ router.post(
   })
 );
 
+// Must be declared before '/:id' so "export" is not treated as an id.
+router.get(
+  '/export',
+  requireRole('pastor'),
+  asyncHandler(async (_req, res) => {
+    const csv = await membersService.exportCsv();
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="members.csv"');
+    res.send(csv);
+  })
+);
+
 router.get(
   '/:id',
   requireRole('pastor', 'leader'),
