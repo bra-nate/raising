@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { useAuth } from '../../hooks/useAuth';
 import { roleLabels } from '../../lib/roles';
@@ -18,15 +19,16 @@ export default function FollowUpDashboard() {
         {user && <span className="text-caption text-faint">· {roleLabels[user.role]}</span>}
       </div>
 
-      <div className="flex flex-col items-center justify-center rounded-cardlg border border-dashed border-hairline bg-surface/50 px-6 py-16 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-input bg-wash text-accent">
-          <IconPhone className="h-6 w-6" />
+      <Link
+        to="/followup/first-timers"
+        className="flex items-center justify-between rounded-cardlg border border-hairline bg-surface px-6 py-5 text-left transition hover:border-accent/40 hover:shadow-elevated"
+      >
+        <span>
+          <span className="block text-heading-sm font-semibold text-ink-2">First-Timers</span>
+          <span className="mt-1 block text-body text-muted">View your queue, log calls, and track follow-ups.</span>
         </span>
-        <h2 className="mt-5 text-heading-sm font-semibold text-ink-2">First-timer records will live here</h2>
-        <p className="mt-1.5 max-w-sm text-body text-muted">
-          Logging calls and converting first-timers into the congregation arrives in Phase 4.
-        </p>
-      </div>
+        <IconPhone className="h-6 w-6 text-accent" />
+      </Link>
     </AppShell>
   );
 }
