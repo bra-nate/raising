@@ -7,6 +7,8 @@ import memberRoutes from './routes/members';
 import memberReportRoutes from './routes/member-reports';
 import settingsRoutes from './routes/settings';
 import activityLogRoutes from './routes/activity-log';
+import dashboardRoutes from './routes/dashboard';
+import firstTimerRoutes from './routes/first-timers';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -26,6 +28,8 @@ app.use('/api/v1/members', memberRoutes);
 app.use('/api/v1/member-reports', memberReportRoutes);
 app.use('/api/v1/settings', settingsRoutes);
 app.use('/api/v1/activity-log', activityLogRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/first-timers', firstTimerRoutes);
 
 // 404 for unmatched routes
 app.use((_req, res) => {
