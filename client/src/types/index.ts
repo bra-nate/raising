@@ -62,10 +62,12 @@ export interface FirstTimer {
   lastName: string;
   phone?: string;
   email?: string;
+  address?: string;
   visitDate: string;
-  serviceType?: string;
-  assignedToId?: string;
+  serviceName?: string;
+  assignedToId?: string | null;
   assignedTo?: { fullName: string };
+  teamLeadId?: string;
   status: FirstTimerStatus;
   convertedAt?: string;
   convertedMemberId?: string;
@@ -113,4 +115,38 @@ export interface Setting {
 export interface ApiList<T> {
   data: T[];
   total: number;
+}
+
+export interface PastorStats {
+  totalActiveMembers: number;
+  reportsThisWeek: number;
+  needsAttention: number;
+  concern: number;
+  firstTimersThisWeek: number;
+  pendingFirstTimers: number;
+}
+
+export interface SilenceRow {
+  id: string;
+  firstName: string;
+  lastName: string;
+  assignedLeader: { fullName: string };
+  lastReportDate?: string | null;
+  silence: SilenceStatus;
+}
+
+export interface RecentReport {
+  id: string;
+  statusTag: StatusTag;
+  isConfidential: boolean;
+  isSafetyFlagged: boolean;
+  createdAt: string;
+  member: { id: string; firstName: string; lastName: string };
+  leader: { fullName: string };
+}
+
+export interface PastorDashboard {
+  stats: PastorStats;
+  silence: SilenceRow[];
+  recentReports: RecentReport[];
 }

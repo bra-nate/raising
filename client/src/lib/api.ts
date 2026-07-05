@@ -1,5 +1,19 @@
 import axios from 'axios';
-import type { ActivityLog, ApiList, AuthUser, Member, MemberReport, StatusTag, User, UserRole } from '../types';
+import type {
+  ActivityLog,
+  ApiList,
+  AuthUser,
+  CallOutcome,
+  FirstTimer,
+  FirstTimerReport,
+  FirstTimerStatus,
+  Member,
+  MemberReport,
+  PastorDashboard,
+  StatusTag,
+  User,
+  UserRole,
+} from '../types';
 
 const TOKEN_KEY = 'sl_token';
 
@@ -122,6 +136,28 @@ export async function createMemberReport(input: MemberReportInput): Promise<Memb
   return data;
 }
 
+export async function redactMemberReport(id: string, redactionSummary: string): Promise<MemberReport> {
+  const { data } = await api.patch(`/member-reports/${id}/redact`, { redactionSummary });
+  return data;
+}
+
+export async function deleteMemberReport(id: string): Promise<{ id: string }> {
+  const { data } = await api.delete(`/member-reports/${id}`);
+  return data;
+}
+
+// ── Pastor Dashboard ──────────────────────────
+export async function getPastorDashboard(): Promise<PastorDashboard> {
+  const { data } = await api.get('/dashboard/pastor');
+  return data;
+}
+
+// CSV export — returns a blob URL the caller can trigger a download from.
+export async function exportMembersCsv(): Promise<Blob> {
+  const { data } = await api.get('/members/export', { responseType: 'blob' });
+  return data;
+}
+
 // ── Activity Log (pastor + superadmin) ────────
 export async function listActivityLog(params?: {
   page?: number;
@@ -141,5 +177,80 @@ export async function getSettings(): Promise<Record<string, string>> {
 
 export async function updateSetting(key: string, value: string): Promise<{ key: string; value: string }> {
   const { data } = await api.put(`/settings/${key}`, { value });
+  return data;
+}
+
+// ── First-Timers ──────────────────────────────
+export async function listFirstTimers(): Promise<ApiList<FirstTimer>> {
+  const { data } = await api.get('/first-timers');
+  return data;
+}
+
+export async function getFirstTimer(id: string): Promise<FirstTimer> {
+  const { data } = await api.get(`/first-timers/${id}`);
+  return data;
+}
+
+export interface FirstTimerInput {
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  email?: string;
+  serviceName?: string;
+  visitDate: string;
+}
+
+export async function createFirstTimer(input: FirstTimerInput): Promise<FirstTimer> {
+  const { data } = await api.post('/first-timers', input);
+  return data;
+}
+
+export interface BatchUploadRow {
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  email?: string;
+}
+export interface BatchUploadInput {
+  meetingName: string;
+  visitDate: string;
+  rows: BatchUploadRow[];
+}
+export async function uploadFirstTimersBatch(
+  input: BatchUploadInput
+): Promise<{ created: number; errors: { row: number; reason: string }[] }> {
+  const { data } = await api.post('/first-timers/batch', input);
+  return data;
+}
+
+export async function updateFirstTimer(
+  id: string,
+  input: Partial<FirstTimerInput> & { assignedToId?: string | null; status?: FirstTimerStatus }
+): Promise<FirstTimer> {
+  const { data } = await api.patch(`/first-timers/${id}`, input);
+  return data;
+}
+
+export async function convertFirstTimer(
+  id: string,
+  input: { assignedLeaderId: string; groupId?: string }
+): Promise<Member> {
+  const { data } = await api.post(`/first-timers/${id}/convert`, input);
+  return data;
+}
+
+// ── First-Timer Reports ───────────────────────
+export async function listFirstTimerReports(firstTimerId: string): Promise<ApiList<FirstTimerReport>> {
+  const { data } = await api.get('/first-timer-reports', { params: { firstTimerId } });
+  return data;
+}
+
+export interface FirstTimerReportInput {
+  firstTimerId: string;
+  callOutcome: CallOutcome;
+  content?: string;
+}
+export async function createFirstTimerReport(input: FirstTimerReportInput): Promise<FirstTimerReport> {
+  const { data } = await api.post('/first-timer-reports', input);
   return data;
 }

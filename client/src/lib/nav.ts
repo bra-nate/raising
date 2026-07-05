@@ -36,8 +36,8 @@ export function navForRole(role: UserRole): NavGroup[] {
         {
           heading: 'Records',
           items: [
-            { label: 'Members', icon: IconPeople, phase: 3 },
-            { label: 'First-Timers', icon: IconPhone, phase: 4 },
+            { label: 'Members', to: '/pastor/members', icon: IconPeople },
+            { label: 'First-Timers', to: '/pastor/first-timers', icon: IconPhone },
           ],
         },
         {
@@ -63,7 +63,7 @@ export function navForRole(role: UserRole): NavGroup[] {
         { items: [{ label: 'Dashboard', to: '/followup', icon: IconGrid }] },
         {
           heading: 'Follow-up',
-          items: [{ label: 'First-Timers', icon: IconPhone, phase: 4 }],
+          items: [{ label: 'First-Timers', to: '/followup/first-timers', icon: IconPhone }],
         },
       ];
     default:
