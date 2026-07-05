@@ -41,19 +41,13 @@ enum CallOutcome {
   not_interested
 }
 
-enum ServiceType {
-  sunday_service
-  midweek
-  special_event
-  other
-}
-
 enum ActivityAction {
   submitted_member_report
   submitted_first_timer_report
   added_member
   updated_member
   converted_first_timer
+  added_first_timer
   viewed_confidential_report
   redacted_report
   deleted_report
@@ -193,7 +187,7 @@ model FirstTimer {
   email             String?
   address           String?
   visitDate         DateTime
-  serviceType       ServiceType?
+  serviceName       String?
   assignedToId      String?
   teamLeadId        String?
   status            FirstTimerStatus @default(pending)
