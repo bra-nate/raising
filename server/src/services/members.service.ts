@@ -23,6 +23,7 @@ function computeSilence(lastReportDate: Date | null, thresholdDays: number): Sil
 const MEMBER_INCLUDE = {
   assignedLeader: { select: { fullName: true } },
   group: { select: { name: true } },
+  convertedFromFirstTimer: { select: { visitDate: true } },
   reports: {
     orderBy: { createdAt: 'desc' as const },
     take: 1,
@@ -45,6 +46,7 @@ type MemberRow = {
   createdAt: Date;
   assignedLeader: { fullName: string };
   group: { name: string } | null;
+  convertedFromFirstTimer: { visitDate: Date } | null;
   reports: { statusTag: StatusTag }[];
 };
 
@@ -197,4 +199,61 @@ async function deactivateMember(user: JwtPayload, id: string) {
   return member;
 }
 
-export const membersService = { listMembers, getMember, createMember, updateMember, deactivateMember, computeSilence };
+// Escape a value for CSV: wrap in quotes and double any embedded quotes.
+function csvCell(value: string | null | undefined): string {
+  const v = value ?? '';
+  return `"${v.replace(/"/g, '""')}"`;
+}
+
+// Pastor-only export of all members (route-guarded).
+async function exportCsv(): Promise<string> {
+  const thresholdDays = await settingsService.getNumber('reportThresholdDays', 14);
+  const rows = (await prisma.member.findMany({
+    include: MEMBER_INCLUDE,
+    orderBy: [{ isActive: 'desc' }, { lastName: 'asc' }],
+  })) as MemberRow[];
+
+  const header = [
+    'First Name',
+    'Last Name',
+    'Phone',
+    'Email',
+    'Address',
+    'Leader',
+    'Group',
+    'Last Report',
+    'Silence',
+    'Latest Status',
+    'Active',
+  ];
+
+  const lines = rows.map((m) =>
+    [
+      m.firstName,
+      m.lastName,
+      m.phone,
+      m.email,
+      m.address,
+      m.assignedLeader.fullName,
+      m.group?.name ?? '',
+      m.lastReportDate ? m.lastReportDate.toISOString().slice(0, 10) : '',
+      computeSilence(m.lastReportDate, thresholdDays),
+      m.reports[0]?.statusTag ?? '',
+      m.isActive ? 'yes' : 'no',
+    ]
+      .map(csvCell)
+      .join(',')
+  );
+
+  return [header.map(csvCell).join(','), ...lines].join('\r\n');
+}
+
+export const membersService = {
+  listMembers,
+  getMember,
+  createMember,
+  updateMember,
+  deactivateMember,
+  computeSilence,
+  exportCsv,
+};
