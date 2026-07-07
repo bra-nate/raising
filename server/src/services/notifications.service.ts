@@ -1,6 +1,7 @@
 import { NotificationType, Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { config } from '../config';
+import { AppError } from '../lib/errors';
 
 interface CreateNotificationArgs {
   userId: string;
@@ -59,4 +60,31 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
   }
 }
 
-export const notificationsService = { createNotification, sendEmail };
+async function list(userId: string) {
+  const [data, unreadCount] = await Promise.all([
+    prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    }),
+    prisma.notification.count({ where: { userId, isRead: false } }),
+  ]);
+  return { data, unreadCount };
+}
+
+async function markRead(userId: string, id: string): Promise<void> {
+  const result = await prisma.notification.updateMany({
+    where: { id, userId },
+    data: { isRead: true },
+  });
+  if (result.count === 0) throw new AppError(404, 'Notification not found');
+}
+
+async function markAllRead(userId: string): Promise<void> {
+  await prisma.notification.updateMany({
+    where: { userId, isRead: false },
+    data: { isRead: true },
+  });
+}
+
+export const notificationsService = { createNotification, sendEmail, list, markRead, markAllRead };
