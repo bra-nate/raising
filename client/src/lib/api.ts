@@ -9,6 +9,7 @@ import type {
   FirstTimerStatus,
   Member,
   MemberReport,
+  Notification,
   PastorDashboard,
   StatusTag,
   User,
@@ -253,4 +254,17 @@ export interface FirstTimerReportInput {
 export async function createFirstTimerReport(input: FirstTimerReportInput): Promise<FirstTimerReport> {
   const { data } = await api.post('/first-timer-reports', input);
   return data;
+}
+
+export async function getNotifications(): Promise<{ data: Notification[]; unreadCount: number }> {
+  const res = await api.get('/notifications');
+  return res.data;
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  await api.patch(`/notifications/${id}/read`);
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await api.patch('/notifications/read-all');
 }
