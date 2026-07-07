@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
+import { NotificationBell } from './NotificationBell';
 import { IconChevronLeft } from '../ui/icons';
 
 interface AppShellProps {
@@ -31,7 +32,10 @@ export function AppShell({ title, subtitle, actions, back, children }: AppShellP
             <h1 className="truncate text-heading-sm font-semibold text-ink-2">{title}</h1>
             {subtitle && <p className="truncate text-caption text-faint">{subtitle}</p>}
           </div>
-          {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+          <div className="flex shrink-0 items-center gap-2">
+            {actions}
+            <NotificationBell />
+          </div>
         </header>
 
         {/* Content */}
