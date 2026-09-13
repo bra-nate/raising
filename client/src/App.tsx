@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import PastorDashboard from './pages/pastor/Dashboard';
 import PastorUsers from './pages/pastor/Users';
 import PastorLeaders from './pages/pastor/Leaders';
+import PastorLeaderProfile from './pages/pastor/LeaderProfile';
 import PastorGroups from './pages/pastor/Groups';
 import PastorInsights from './pages/pastor/Insights';
 import PastorPrivacy from './pages/pastor/Privacy';
@@ -96,6 +97,14 @@ export default function App() {
               element={
                 <RequireRole roles={['pastor']}>
                   <PastorLeaders />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/pastor/leaders/:id"
+              element={
+                <RequireRole roles={['pastor']}>
+                  <PastorLeaderProfile />
                 </RequireRole>
               }
             />

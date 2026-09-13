@@ -127,7 +127,7 @@ export default function PastorLeaders() {
                   >
                     <td className="px-5 py-3">
                       <Link
-                        to={`/pastor/members?leader=${encodeURIComponent(r.leader.fullName)}`}
+                        to={`/pastor/leaders/${r.leader.id}`}
                         className="text-body font-medium text-ink-2 hover:text-accent"
                       >
                         {r.leader.fullName}
