@@ -1,4 +1,4 @@
-# ShepherdLog — DATA.md
+# raising — DATA.md
 *Prisma Schema, Relationships, API Routes, and Access Control*
 
 ---
@@ -307,11 +307,11 @@ async function main() {
   // Pastor account — change password after first login
   const hash = await bcrypt.hash('changeme123', 12);
   await prisma.user.upsert({
-    where: { email: 'pastor@shepherdlog.local' },
+    where: { email: 'pastor@raising.local' },
     update: {},
     create: {
       fullName: 'Pastor',
-      email: 'pastor@shepherdlog.local',
+      email: 'pastor@raising.local',
       password: hash,
       role: 'pastor',
     },

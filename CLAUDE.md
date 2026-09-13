@@ -1,11 +1,11 @@
-# ShepherdLog — CLAUDE.md
+# raising — CLAUDE.md
 *Pastoral Care Reporting Platform*
 
 ---
 
 ## What This Is
 
-ShepherdLog is a web-based pastoral care reporting platform for a three-tier disciple-making ministry. Leaders submit structured reports on congregation members up to the pastor. A separate follow-up team logs calls to first-time visitors. The pastor has full read access across all reporting streams.
+raising is a web-based pastoral care reporting platform for a three-tier disciple-making ministry. Leaders submit structured reports on congregation members up to the pastor. A separate follow-up team logs calls to first-time visitors. The pastor has full read access across all reporting streams.
 
 **Core constraint:** No congregation member or first-timer has a platform account. Only pastor, leaders, and follow-up team members authenticate.
 
@@ -128,7 +128,7 @@ This is a monorepo with two workspaces.
 ### Server (`server/.env`)
 
 ```env
-DATABASE_URL="postgresql://user:password@host:5432/shepherdlog"
+DATABASE_URL="postgresql://user:password@host:5432/raising"
 JWT_SECRET="long-random-string-min-32-chars"
 JWT_EXPIRES_IN="7d"
 RESEND_API_KEY=""

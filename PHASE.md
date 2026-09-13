@@ -1,4 +1,4 @@
-# ShepherdLog — PHASE.md
+# raising — PHASE.md
 *Phased Build Plan*
 
 ---
@@ -13,47 +13,47 @@ Each phase is a complete, usable vertical slice. Start a new Claude Code session
 *Target: Monorepo scaffold, database, working auth, role routing*
 
 ### 1.1 Monorepo Setup
-- [ ] Create root `package.json` with `workspaces: ["client", "server"]`
-- [ ] `server/`: `npm init`, install: `express`, `@prisma/client`, `prisma`, `jsonwebtoken`, `bcrypt`, `cors`, `dotenv`, `node-cron`; dev: `typescript`, `ts-node-dev`, `@types/*`
-- [ ] `client/`: `npm create vite@latest -- --template react-ts`, install: `tailwindcss`, `react-router-dom`, `axios`
-- [ ] Configure `tsconfig.json` for both workspaces (strict mode)
-- [ ] Set up Tailwind in the client
+- [x] Create root `package.json` with `workspaces: ["client", "server"]`
+- [x] `server/`: `npm init`, install: `express`, `@prisma/client`, `prisma`, `jsonwebtoken`, `bcrypt`, `cors`, `dotenv`, `node-cron`; dev: `typescript`, `ts-node-dev`, `@types/*`
+- [x] `client/`: `npm create vite@latest -- --template react-ts`, install: `tailwindcss`, `react-router-dom`, `axios`
+- [x] Configure `tsconfig.json` for both workspaces (strict mode)
+- [x] Set up Tailwind in the client
 
 ### 1.2 Database Setup
-- [ ] Provision a PostgreSQL database (local for dev: `docker-compose.yml` with `postgres:15` image, or local install)
-- [ ] Copy schema from DATA.md into `server/prisma/schema.prisma`
-- [ ] Run `prisma migrate dev --name init`
-- [ ] Run seed script: creates settings defaults + pastor account
-- [ ] Verify tables exist and seed data is present
+- [x] Provision a PostgreSQL database (local for dev: `docker-compose.yml` with `postgres:15` image, or local install)
+- [x] Copy schema from DATA.md into `server/prisma/schema.prisma`
+- [x] Run `prisma migrate dev --name init`
+- [x] Run seed script: creates settings defaults + pastor account
+- [x] Verify tables exist and seed data is present
 
 ### 1.3 Express Server Base
-- [ ] `server/src/index.ts`: Express app, JSON body parser, CORS (origin = `VITE_API_URL`), routes mount, global error handler
-- [ ] `server/src/config.ts`: read and validate all env vars on startup — crash with a clear message if any are missing
-- [ ] `server/src/lib/prisma.ts`: PrismaClient singleton
-- [ ] `server/src/lib/jwt.ts`: `signToken(payload)` and `verifyToken(token)` helpers
-- [ ] `server/src/middleware/authenticate.ts`: verify JWT, attach `req.user`
-- [ ] `server/src/middleware/requireRole.ts`: role guard factory
-- [ ] `server/src/middleware/errorHandler.ts`: catch-all error middleware
+- [x] `server/src/index.ts`: Express app, JSON body parser, CORS (origin = `VITE_API_URL`), routes mount, global error handler
+- [x] `server/src/config.ts`: read and validate all env vars on startup — crash with a clear message if any are missing
+- [x] `server/src/lib/prisma.ts`: PrismaClient singleton
+- [x] `server/src/lib/jwt.ts`: `signToken(payload)` and `verifyToken(token)` helpers
+- [x] `server/src/middleware/authenticate.ts`: verify JWT, attach `req.user`
+- [x] `server/src/middleware/requireRole.ts`: role guard factory
+- [x] `server/src/middleware/errorHandler.ts`: catch-all error middleware
 
 ### 1.4 Auth Routes
-- [ ] `POST /api/v1/auth/login`: find user by email, compare bcrypt hash, return signed JWT + user profile
-- [ ] `GET /api/v1/auth/me`: return `req.user` populated by `authenticate` middleware
-- [ ] No logout endpoint needed (stateless JWT — client discards token)
+- [x] `POST /api/v1/auth/login`: find user by email, compare bcrypt hash, return signed JWT + user profile
+- [x] `GET /api/v1/auth/me`: return `req.user` populated by `authenticate` middleware
+- [x] No logout endpoint needed (stateless JWT — client discards token)
 
 ### 1.5 React Auth Shell
-- [ ] `AuthContext.tsx`: stores JWT in localStorage (`sl_token`), exposes `user`, `login()`, `logout()`, `isAuthenticated`
-- [ ] `useAuth.ts` hook wrapping the context
-- [ ] `client/src/lib/api.ts`: Axios instance with base URL from `VITE_API_URL`, auto-attaches `Authorization: Bearer` header from localStorage
-- [ ] `/login` page: email + password form, calls `POST /auth/login`, stores token, redirects to role root
-- [ ] Route guard component: reads role from context, redirects to correct dashboard
-- [ ] Placeholder pages for `/pastor`, `/leader`, `/followup` with role label
+- [x] `AuthContext.tsx`: stores JWT in localStorage (`sl_token`), exposes `user`, `login()`, `logout()`, `isAuthenticated`
+- [x] `useAuth.ts` hook wrapping the context
+- [x] `client/src/lib/api.ts`: Axios instance with base URL from `VITE_API_URL`, auto-attaches `Authorization: Bearer` header from localStorage
+- [x] `/login` page: email + password form, calls `POST /auth/login`, stores token, redirects to role root
+- [x] Route guard component: reads role from context, redirects to correct dashboard
+- [x] Placeholder pages for `/pastor`, `/leader`, `/followup` with role label
 
 ### 1.6 User Management (Pastor Only)
-- [ ] `GET /api/v1/users`: return all users (pastor only)
-- [ ] `POST /api/v1/users`: create user with bcrypt-hashed password; log `created_user`
-- [ ] `PATCH /api/v1/users/:id`: update name or role; log `updated_settings` if role changed
-- [ ] `PATCH /api/v1/users/:id/deactivate`: set `isActive = false`; log `deactivated_user`
-- [ ] `/pastor/users` page: user table + create user modal + deactivate action
+- [x] `GET /api/v1/users`: return all users (pastor only)
+- [x] `POST /api/v1/users`: create user with bcrypt-hashed password; log `created_user`
+- [x] `PATCH /api/v1/users/:id`: update name or role; log `updated_settings` if role changed
+- [x] `PATCH /api/v1/users/:id/deactivate`: set `isActive = false`; log `deactivated_user`
+- [x] `/pastor/users` page: user table + create user modal + deactivate action
 
 **Phase 1 exit criteria:** Pastor logs in, lands on `/pastor`, creates a leader account. Leader logs in, lands on `/leader`. A request to `/api/v1/users` from a leader JWT returns 403.
 
@@ -116,29 +116,29 @@ Each phase is a complete, usable vertical slice. Start a new Claude Code session
 *Target: Follow-up team logs calls; conversion path works*
 
 ### 4.1 First-Timer API
-- [ ] `GET /api/v1/first-timers`: team member → `assignedToId = req.user.id`; team lead + pastor → all
-- [ ] `POST /api/v1/first-timers`: create; if `assignedToId` set, create `first_timer_assigned` notification for that user
-- [ ] `GET /api/v1/first-timers/:id`: scope guard for team member
-- [ ] `PATCH /api/v1/first-timers/:id`: team lead or pastor only
-- [ ] `POST /api/v1/first-timers/:id/convert`: pastor or team lead only; Prisma transaction — create member, update first-timer status; log `converted_first_timer`
+- [x] `GET /api/v1/first-timers`: team member → `assignedToId = req.user.id`; team lead + pastor → all
+- [x] `POST /api/v1/first-timers`: create; if `assignedToId` set, create `first_timer_assigned` notification for that user
+- [x] `GET /api/v1/first-timers/:id`: scope guard for team member
+- [x] `PATCH /api/v1/first-timers/:id`: team lead or pastor only
+- [x] `POST /api/v1/first-timers/:id/convert`: pastor or team lead only; Prisma transaction — create member, update first-timer status; log `converted_first_timer`
 
 ### 4.2 First-Timer Report API
-- [ ] `GET /api/v1/first-timer-reports?firstTimerId=`: team member → own reports only; team lead + pastor → all for that first-timer
-- [ ] `POST /api/v1/first-timer-reports`: team member must own the first-timer; auto-update `firstTimer.status` based on `callOutcome`; log `submitted_first_timer_report`
+- [x] `GET /api/v1/first-timer-reports?firstTimerId=`: team member → own reports only; team lead + pastor → all for that first-timer
+- [x] `POST /api/v1/first-timer-reports`: team member must own the first-timer; auto-update `firstTimer.status` based on `callOutcome`; log `submitted_first_timer_report`
 
 ### 4.3 Follow-Up Frontend
-- [ ] `/followup` dashboard: first-timer list scoped by role, pending sorted to top
-- [ ] `/followup/first-timers/:id`: call history timeline, "Log Call" modal
-- [ ] Call outcome auto-updates status badge on profile after submission
+- [x] `/followup` dashboard: first-timer list scoped by role, pending sorted to top
+- [x] `/followup/first-timers/:id`: call history timeline, "Log Call" modal
+- [x] Call outcome auto-updates status badge on profile after submission
 
 ### 4.4 Pastor First-Timer Views
-- [ ] `/pastor/first-timers`: all first-timers with filters
-- [ ] `/pastor/first-timers/:id`: full profile + "Convert to Son/Daughter" button
-- [ ] Conversion modal: select leader + group; on confirm runs convert API call
+- [x] `/pastor/first-timers`: all first-timers with filters
+- [x] `/pastor/first-timers/:id`: full profile + "Convert to Son/Daughter" button
+- [x] Conversion modal: select leader + group; on confirm runs convert API call
 
 ### 4.5 Converted Member View
-- [ ] Member profile shows "Joined as first-timer on [visitDate]" banner when `convertedFromFirstTimerId` is set
-- [ ] Below report timeline: "Call history before joining" section fetched via `GET /first-timer-reports?firstTimerId=`
+- [x] Member profile shows "Joined as first-timer on [visitDate]" banner when `convertedFromFirstTimerId` is set
+- [x] Below report timeline: "Call history before joining" section fetched via `GET /first-timer-reports?firstTimerId=`
 
 **Phase 4 exit criteria:** Team member logs a call, status updates. Team lead converts a first-timer. New member profile shows call history from before conversion.
 
@@ -148,14 +148,14 @@ Each phase is a complete, usable vertical slice. Start a new Claude Code session
 *Target: Audit trail complete; platform configuration live*
 
 ### 5.1 Activity Log Frontend
-- [ ] `/pastor/activity-log`: paginated table (20/page), filter by user, action, date range
-- [ ] Verify all actions from Phases 1–4 are writing log entries — spot-check one of each type
+- [x] `/pastor/activity-log`: paginated table (20/page), filter by user, action, date range
+- [x] Verify all actions from Phases 1–4 are writing log entries — spot-check one of each type
 
 ### 5.2 Settings Frontend
-- [ ] `GET /api/v1/settings` already exists from Phase 2
-- [ ] `PATCH /api/v1/settings`: pastor only; update one or more keys; log `updated_settings` with old and new value per changed key
-- [ ] `/pastor/settings` page: form for all 5 settings; save action
-- [ ] Settings propagation: all components that show delete/redact buttons must read `allowDeleteReports` from a settings context loaded at app mount
+- [x] `GET /api/v1/settings` already exists from Phase 2
+- [x] `PATCH /api/v1/settings`: pastor only; update one or more keys; log `updated_settings` with old and new value per changed key
+- [x] `/pastor/settings` page: form for all 5 settings; save action
+- [x] Settings propagation: all components that show delete/redact buttons must read `allowDeleteReports` from a settings context loaded at app mount
 
 **Phase 5 exit criteria:** Activity log shows all historical events. Pastor toggles `allowDeleteReports` off — redact and delete buttons disappear for all roles immediately.
 
@@ -165,28 +165,28 @@ Each phase is a complete, usable vertical slice. Start a new Claude Code session
 *Target: In-app bell and email alerts are live*
 
 ### 6.1 Notification Bell
-- [ ] `GET /api/v1/notifications`: own notifications, sorted by `createdAt` desc, last 20
-- [ ] `PATCH /api/v1/notifications/:id/read` and `PATCH /api/v1/notifications/read-all`
-- [ ] `NotificationBell` component: polls every 60 seconds, shows unread count badge
-- [ ] Dropdown panel: notification list, mark-as-read on click
+- [x] `GET /api/v1/notifications`: own notifications, sorted by `createdAt` desc, last 20
+- [x] `PATCH /api/v1/notifications/:id/read` and `PATCH /api/v1/notifications/read-all`
+- [x] `NotificationBell` component: polls every 60 seconds, shows unread count badge
+- [x] Dropdown panel: notification list, mark-as-read on click
 
 ### 6.2 Notification Service (`server/src/services/notifications.service.ts`)
-- [ ] `createNotification(userId, type, title, message, entityId?)`: insert into `notifications`
-- [ ] `sendEmail(to, subject, html)`: call Resend API
-- [ ] Safety flag path (already triggered in Phase 2): confirm bell updates in real-time for pastor during a test
+- [x] `createNotification(userId, type, title, message, entityId?)`: insert into `notifications`
+- [x] `sendEmail(to, subject, html)`: call Resend API
+- [x] Safety flag path (already triggered in Phase 2): confirm bell updates in real-time for pastor during a test
 
 ### 6.3 Scheduled Jobs (`server/src/jobs/scheduler.ts`)
-- [ ] `node-cron` setup inside Express process — starts on server boot
-- [ ] **Report reminder job**: runs on configured `reportReminderDay` at 08:00 WAT
+- [x] `node-cron` setup inside Express process — starts on server boot
+- [x] **Report reminder job**: runs on configured `reportReminderDay` at 08:00 WAT
   - Query all active leaders
   - For each, find members with no report in the last `reportThresholdDays`
   - If any: call `createNotification` + `sendEmail`
-- [ ] **Silence detection job**: runs daily at 07:00 WAT
+- [x] **Silence detection job**: runs daily at 07:00 WAT
   - Query all active members where `lastReportDate` is null or past threshold
   - Upsert pastor notification (deduplicate — don't create duplicate notifications for the same member on the same day)
 
 ### 6.4 First-Timer Assignment Notification
-- [ ] Already triggered in Phase 4 `POST /first-timers` — confirm it fires correctly
+- [x] Already triggered in Phase 4 `POST /first-timers` — confirm it fires correctly
 
 **Phase 6 exit criteria:** Pastor receives safety flag bell notification immediately when a leader submits a flagged report. Leader receives a notification on the configured reminder day.
 
@@ -196,14 +196,14 @@ Each phase is a complete, usable vertical slice. Start a new Claude Code session
 *Target: Production-ready*
 
 - [ ] Mobile responsiveness audit — all core flows work at 375px viewport
-- [ ] Empty states on all list views (no members yet, no reports yet)
+- [x] Empty states on all list views (no members yet, no reports yet)
 - [ ] Loading skeletons on all async fetches
-- [ ] Error states with user-friendly messages (network failure, 403, 404)
-- [ ] Security test: log in as a leader and attempt `GET /api/v1/members?assignedLeaderId=<other-leader-id>` directly — must return only own members
-- [ ] Security test: attempt to redact or delete a safety-flagged report via direct API call — must return 403
-- [ ] Security test: attempt to call `DELETE /api/v1/activity-log/anything` — must return 404 (no route exists)
-- [ ] Confirm `JWT_SECRET` and `DATABASE_URL` never appear in any client bundle (check Vite build output)
-- [ ] Data privacy notice in app footer
+- [x] Error states with user-friendly messages (network failure, 403, 404)
+- [x] Security test: log in as a leader and attempt `GET /api/v1/members?assignedLeaderId=<other-leader-id>` directly — must return only own members
+- [x] Security test: attempt to redact or delete a safety-flagged report via direct API call — must return 403
+- [x] Security test: attempt to call `DELETE /api/v1/activity-log/anything` — must return 404 (no route exists)
+- [x] Confirm `JWT_SECRET` and `DATABASE_URL` never appear in any client bundle (check Vite build output)
+- [x] Data privacy notice in app footer
 - [ ] Set all production environment variables on chosen host
 - [ ] Configure Resend domain and verify sender email
 - [ ] Final end-to-end walkthrough:
@@ -215,3 +215,31 @@ Each phase is a complete, usable vertical slice. Start a new Claude Code session
   - Team lead converts first-timer → member profile shows call history
   - Pastor checks activity log — all events present
   - Pastor toggles `allowDeleteReports` off — delete buttons disappear
+
+---
+
+## Phase 7.5 — Password Lifecycle
+*Shipped*
+
+- [x] `POST /auth/change-password` — verifies the current password, rejects reuse
+- [x] `PATCH /users/:id/password` — pastor-issued reset, actor recorded in the log
+- [x] Shared `lib/password.ts` — one validation and hashing rule for all three call sites
+- [x] `PasswordModal` in both modes: sidebar self-serve, per-row reset in User Management
+- [ ] Force rotation on first login (needs a `mustChangePassword` column and a login-flow gate)
+
+---
+
+## Phases 8–12 — Operational Completeness
+
+Planned and tracked in ROADMAP.md; summarised here so this file stays the index.
+
+| Phase | Scope | State |
+|---|---|---|
+| 8 | Case management — concern and safety cases that someone owns and closes, with escalation | Built |
+| 9 | Follow-up queue — due today, overdue, aging, workload; explicit assignment plus claim-on-call | Built |
+| 10 | Group management — CRUD, leader handover moves members, care-risk summary | Built |
+| 11 | Outcome metrics — first-contact latency, conversion, resolution time, leader consistency, group risk | Built |
+| 12 | Privacy and retention — retention review, subject access export, legal basis, confidential access review | Built |
+
+Deliberately out of scope: multi-tenancy. raising is single-organisation software;
+`churchId` would touch every query and every test for no present benefit.

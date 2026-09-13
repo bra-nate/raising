@@ -1,4 +1,4 @@
-# ShepherdLog — PRD
+# raising — PRD
 *Product Requirements Document v1.0*
 
 ---
@@ -7,7 +7,7 @@
 
 A disciple-making ministry with a large congregation uses leaders to stay connected with individual members and report to the pastor. Currently this happens via email and informal messages — meaning the pastor has no consolidated view, report history is scattered, and there is no structured way to flag pastoral concerns. A separate follow-up team calls first-time visitors but has no shared system to log call outcomes or track whether first-timers have been converted into the main congregation.
 
-ShepherdLog replaces all of this with a single structured reporting platform.
+raising replaces all of this with a single structured reporting platform.
 
 ---
 
@@ -62,13 +62,21 @@ Oversees the first-timer follow-up team.
 Front-line caller who contacts first-time visitors.
 
 **Can:**
-- View only the first-timers assigned to them
+- View the first-timers assigned to them, plus the unassigned pool
+- Claim an unassigned first-timer by logging the first call on them
 - Log call outcomes and notes on their assigned first-timers
 
 **Cannot:**
-- View first-timers assigned to other team members
+- View first-timers assigned to another team member
+- Assign or reassign a first-timer to anyone
+- See team workload figures
 - View member records
 - Access any admin functions
+
+**Assignment rule.** A team lead or the pastor assigns explicitly. Anything left
+unassigned sits in a shared pool that any team member may claim by making the
+first call — the claim is recorded in the activity log. This keeps a visitor from
+waiting on an assignment that nobody made.
 
 ---
 
