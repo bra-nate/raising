@@ -43,4 +43,13 @@ router.patch(
   })
 );
 
+router.patch(
+  '/:id/password',
+  asyncHandler(async (req, res) => {
+    const { newPassword } = req.body ?? {};
+    await usersService.resetPassword(req.user!.id, req.params.id, String(newPassword ?? ''));
+    res.json({ ok: true });
+  })
+);
+
 export default router;

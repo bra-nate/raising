@@ -11,6 +11,10 @@ import dashboardRoutes from './routes/dashboard';
 import firstTimerRoutes from './routes/first-timers';
 import firstTimerReportRoutes from './routes/first-timer-reports';
 import notificationRoutes from './routes/notifications';
+import caseRoutes from './routes/cases';
+import groupRoutes from './routes/groups';
+import metricsRoutes from './routes/metrics';
+import privacyRoutes from './routes/privacy';
 import { errorHandler } from './middleware/errorHandler';
 
 export function createApp() {
@@ -33,6 +37,10 @@ export function createApp() {
   app.use('/api/v1/first-timers', firstTimerRoutes);
   app.use('/api/v1/first-timer-reports', firstTimerReportRoutes);
   app.use('/api/v1/notifications', notificationRoutes);
+  app.use('/api/v1/cases', caseRoutes);
+  app.use('/api/v1/groups', groupRoutes);
+  app.use('/api/v1/metrics', metricsRoutes);
+  app.use('/api/v1/privacy', privacyRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({ error: 'Not found' });

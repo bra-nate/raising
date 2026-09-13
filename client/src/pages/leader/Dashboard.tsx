@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, Card } from '../../components/ui';
+import { CasesPanel } from '../../components/cases/CasesPanel';
 import { IconPeople, IconPlus, IconReports } from '../../components/ui/icons';
 import { ReportModal } from '../../components/reports/ReportModal';
 import { listMembers } from '../../lib/api';
@@ -95,6 +96,13 @@ export default function LeaderDashboard() {
           })}
         </div>
       )}
+
+      <div className="mt-6">
+        <CasesPanel
+          title="Your open cases"
+          emptyText="No open cases on your members."
+        />
+      </div>
 
       {reportFor && (
         <ReportModal

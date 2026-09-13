@@ -1,20 +1,15 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Button, Card, Field, Modal } from '../../components/ui';
+import { Badge, Button, Card, Field, Modal, Select } from '../../components/ui';
+import { CasesPanel } from '../../components/cases/CasesPanel';
+import { PrivacyCard } from '../../components/PrivacyCard';
 import { IconLock, IconPlus } from '../../components/ui/icons';
 import { ReportModal } from '../../components/reports/ReportModal';
-import {
-  deleteMemberReport,
-  getMember,
-  getSettings,
-  listFirstTimerReports,
-  listMemberReports,
-  redactMemberReport,
-} from '../../lib/api';
+import { deleteMemberReport, getMember, getSettings, listFirstTimerReports, listGroups, listMemberReports, redactMemberReport, updateMember } from '../../lib/api';
 import { callOutcomeLabels } from '../../lib/firstTimers';
 import { formatDate, fullName, relativeDate, silenceMeta, statusMeta } from '../../lib/utils';
-import type { FirstTimerReport, Member, MemberReport } from '../../types';
+import type { FirstTimerReport, Group, Member, MemberReport } from '../../types';
 
 export default function PastorMemberProfile() {
   const { id = '' } = useParams();
@@ -107,7 +102,7 @@ export default function PastorMemberProfile() {
           <h2 className="text-caption uppercase tracking-wide text-faint">Details</h2>
           <dl className="mt-4 space-y-3 text-body">
             <Detail label="Leader" value={member.assignedLeader?.fullName} />
-            <Detail label="Group" value={member.group?.name} />
+            <GroupField member={member} onChanged={refresh} />
             <Detail label="Phone" value={member.phone} />
             <Detail label="Email" value={member.email} />
             <Detail label="Address" value={member.address} />
@@ -166,6 +161,22 @@ export default function PastorMemberProfile() {
         </section>
       )}
 
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <PrivacyCard
+          type="member"
+          id={member.id}
+          name={fullName(member)}
+          legalBasis={member.legalBasis}
+          consentNote={member.consentNote}
+          onSaved={refresh}
+        />
+        <CasesPanel
+          memberId={member.id}
+          title="Cases"
+          emptyText="No open cases on this member."
+        />
+      </div>
+
       <ReportModal
         open={reportOpen}
         onClose={() => setReportOpen(false)}
@@ -188,6 +199,51 @@ export default function PastorMemberProfile() {
         />
       )}
     </AppShell>
+  );
+}
+
+/** Inline group reassignment — the pastor is the only role that can do this. */
+function GroupField({ member, onChanged }: { member: Member; onChanged: () => void }) {
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    listGroups()
+      .then(({ data }) => setGroups(data))
+      .catch(() => setGroups([]));
+  }, []);
+
+  async function handleChange(groupId: string) {
+    setSaving(true);
+    try {
+      await updateMember(member.id, { groupId });
+      onChanged();
+    } catch {
+      alert('Could not change this member’s group.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div>
+      <dt className="text-caption text-faint">Group</dt>
+      <dd className="mt-1">
+        <Select
+          value={member.groupId ?? ''}
+          onChange={(e) => handleChange(e.target.value)}
+          disabled={saving}
+          aria-label="Group"
+        >
+          <option value="">No group</option>
+          {groups.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.name}
+            </option>
+          ))}
+        </Select>
+      </dd>
+    </div>
   );
 }
 

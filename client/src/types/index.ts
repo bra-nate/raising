@@ -2,7 +2,15 @@ export type UserRole = 'superadmin' | 'pastor' | 'leader' | 'followup_team_lead'
 export type StatusTag = 'good' | 'needs_attention' | 'concern';
 export type FirstTimerStatus = 'pending' | 'contacted' | 'interested' | 'not_interested' | 'converted';
 export type CallOutcome = 'answered' | 'no_answer' | 'callback_requested' | 'interested' | 'not_interested';
-export type NotificationType = 'report_due' | 'member_unreported' | 'safety_flag' | 'first_timer_assigned';
+export type NotificationType =
+  | 'report_due'
+  | 'member_unreported'
+  | 'safety_flag'
+  | 'first_timer_assigned'
+  | 'case_assigned'
+  | 'case_escalated';
+export type CaseKind = 'concern' | 'safety';
+export type CaseStatus = 'open' | 'acknowledged' | 'resolved';
 export type SilenceStatus = 'ok' | 'overdue' | 'significant';
 
 export interface AuthUser {
@@ -37,6 +45,9 @@ export interface Member {
   convertedFromFirstTimerId?: string;
   convertedFromFirstTimer?: { visitDate: string };
   createdAt: string;
+  legalBasis?: string | null;
+  consentNote?: string | null;
+  retentionRedactedAt?: string | null;
   // Computed server-side — never derived on the frontend.
   silence?: SilenceStatus;
   latestStatus?: StatusTag | null;
@@ -56,6 +67,90 @@ export interface MemberReport {
   createdAt: string;
 }
 
+export interface RetentionCandidate {
+  type: 'member' | 'first_timer';
+  id: string;
+  name: string;
+  lastActivityAt: string;
+  monthsInactive: number;
+  reportCount: number;
+  exemptReason: string | null;
+}
+
+export interface ConfidentialAccessReview {
+  days: number;
+  total: number;
+  byUser: { userId: string; fullName: string; role: UserRole; views: number; lastAt: string }[];
+  entries: { id: string; at: string; by: string; role: UserRole; memberId: string | null }[];
+}
+
+export interface Metrics {
+  months: string[];
+  firstContact: {
+    medianDays: number | null;
+    contacted: number;
+    neverContacted: number;
+    byMonth: { month: string; medianDays: number | null; contacted: number }[];
+  };
+  conversion: {
+    byMonth: { month: string; visitors: number; converted: number; rate: number | null }[];
+    byAssignee: { userId: string; fullName: string; assigned: number; converted: number; rate: number | null }[];
+  };
+  caseResolution: {
+    medianDaysOverall: number | null;
+    medianDaysConcern: number | null;
+    medianDaysSafety: number | null;
+    resolved: number;
+    open: number;
+    oldestOpenDays: number | null;
+    byMonth: { month: string; resolved: number; medianDays: number | null }[];
+  };
+  leaderConsistency: {
+    cycles: number;
+    cycleDays: number;
+    leaders: { userId: string; fullName: string; members: number; rate: number | null; trend: (number | null)[] }[];
+  };
+  groupRisk: {
+    groupId: string | null;
+    name: string;
+    members: number;
+    silent: number;
+    openCases: number;
+    silenceRate: number | null;
+  }[];
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  leaderId: string;
+  leader?: { id: string; fullName: string };
+  createdAt: string;
+  // Computed server-side.
+  memberCount: number;
+  silentCount: number;
+  openCaseCount: number;
+}
+
+export interface CareCase {
+  id: string;
+  kind: CaseKind;
+  status: CaseStatus;
+  memberId: string;
+  member?: { id: string; firstName: string; lastName: string; assignedLeaderId: string };
+  ownerId?: string | null;
+  owner?: { fullName: string } | null;
+  dueDate?: string | null;
+  actionPlan?: string | null;
+  acknowledgedAt?: string | null;
+  acknowledgedBy?: { fullName: string } | null;
+  resolvedAt?: string | null;
+  resolvedBy?: { fullName: string } | null;
+  resolutionNote?: string | null;
+  reportCount: number;
+  createdAt: string;
+}
+
 export interface FirstTimer {
   id: string;
   firstName: string;
@@ -72,7 +167,39 @@ export interface FirstTimer {
   convertedAt?: string;
   convertedMemberId?: string;
   isActive: boolean;
+  legalBasis?: string | null;
+  consentNote?: string | null;
+  retentionRedactedAt?: string | null;
   createdAt: string;
+}
+
+export interface QueueEntry {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone?: string | null;
+  visitDate: string;
+  serviceName?: string | null;
+  status: FirstTimerStatus;
+  assignedToId?: string | null;
+  assignedTo?: { id: string; fullName: string } | null;
+  lastAttemptAt?: string | null;
+  lastOutcome?: CallOutcome | null;
+  attempts: number;
+  dueAt: string;
+  ageDays: number;
+}
+
+export interface FollowUpQueue {
+  dueToday: QueueEntry[];
+  overdue: QueueEntry[];
+  upcoming: QueueEntry[];
+  callbacks: QueueEntry[];
+  unassigned: QueueEntry[];
+  aging: { d0_2: number; d3_7: number; d8_14: number; d15plus: number };
+  workload: { userId: string; fullName: string; open: number; overdue: number }[];
+  assignees: { id: string; fullName: string }[];
+  counts: { total: number; dueToday: number; overdue: number; callbacks: number; unassigned: number };
 }
 
 export interface FirstTimerReport {

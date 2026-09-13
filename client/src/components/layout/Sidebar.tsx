@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { navForRole } from '../../lib/nav';
 import { roleLabels } from '../../lib/roles';
 import { ThemeToggle } from '../ThemeToggle';
-import { IconLogout } from '../ui/icons';
+import { IconLock, IconLogout } from '../ui/icons';
+import { PasswordModal } from '../PasswordModal';
 
 function initials(name: string) {
   return name
@@ -17,6 +19,7 @@ function initials(name: string) {
 
 export function Sidebar() {
   const { user, logout } = useAuth();
+  const [pwOpen, setPwOpen] = useState(false);
   if (!user) return null;
   const groups = navForRole(user.role);
 
@@ -96,6 +99,14 @@ export function Sidebar() {
           </div>
           <ThemeToggle />
           <button
+            onClick={() => setPwOpen(true)}
+            aria-label="Change password"
+            title="Change password"
+            className="flex h-8 w-8 items-center justify-center rounded-pill text-muted transition hover:bg-wash hover:text-ink-2 focus:outline-none focus-visible:shadow-focus"
+          >
+            <IconLock className="h-4 w-4" />
+          </button>
+          <button
             onClick={logout}
             aria-label="Sign out"
             title="Sign out"
@@ -105,6 +116,8 @@ export function Sidebar() {
           </button>
         </div>
       </div>
+
+      <PasswordModal open={pwOpen} onClose={() => setPwOpen(false)} />
     </aside>
   );
 }

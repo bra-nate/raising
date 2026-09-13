@@ -81,6 +81,14 @@ async function createReport(user: JwtPayload, input: CreateReportInput) {
     // record takes ownership.
     if (ft.assignedToId === null && user.role === 'followup_team_member') {
       await tx.firstTimer.update({ where: { id: ft.id }, data: { assignedToId: user.id } });
+      await writeLog({
+        userId: user.id,
+        action: 'claimed_first_timer',
+        entityType: 'first_timer',
+        entityId: ft.id,
+        metadata: { via: 'call_log' },
+        tx,
+      });
     }
 
     const created = await tx.firstTimerReport.create({

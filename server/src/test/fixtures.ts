@@ -49,3 +49,23 @@ export async function seedSettings(overrides: Record<string, string> = {}) {
     await prisma.setting.create({ data: { key, value } });
   }
 }
+
+export async function createFirstTimer(
+  overrides: Partial<{ visitDate: Date; assignedToId: string | null; status: string; firstName: string }> = {}
+) {
+  const n = uniq();
+  return prisma.firstTimer.create({
+    data: {
+      firstName: overrides.firstName ?? `Visitor${n}`,
+      lastName: 'Test',
+      visitDate: overrides.visitDate ?? new Date(),
+      assignedToId: overrides.assignedToId ?? null,
+      status: (overrides.status as never) ?? 'pending',
+    },
+  });
+}
+
+/** N days before now, at the same clock time. */
+export function daysAgo(n: number): Date {
+  return new Date(Date.now() - n * 86_400_000);
+}

@@ -56,9 +56,37 @@ enum ActivityAction {
   updated_settings
   logged_in
   changed_user_role
+  changed_password
+  reset_user_password
+  opened_case
+  acknowledged_case
+  assigned_case
+  resolved_case
+  escalated_case
+  assigned_first_timer
+  claimed_first_timer
+  created_group
+  updated_group
+  deleted_group
+  exported_person_data
+  redacted_for_retention
+  reviewed_confidential_access
+}
+
+enum CaseKind {
+  concern
+  safety
+}
+
+enum CaseStatus {
+  open
+  acknowledged
+  resolved
 }
 
 enum EntityType {
+  case_record
+  group
   member
   first_timer
   member_report
@@ -72,6 +100,9 @@ enum NotificationType {
   member_unreported
   safety_flag
   first_timer_assigned
+  case_assigned
+  case_escalated
+  retention_due
 }
 
 enum DeletePermission {
@@ -115,6 +146,9 @@ model User {
   notifications       Notification[]
   updatedSettings     Setting[]
   groups              Group[]
+  ownedCases          Case[]             @relation("CaseOwner")
+  acknowledgedCases   Case[]             @relation("CaseAcknowledgedBy")
+  resolvedCases       Case[]             @relation("CaseResolvedBy")
 
   @@map("users")
 }
@@ -145,6 +179,9 @@ model Member {
   isActive                  Boolean   @default(true)
   createdById               String
   convertedFromFirstTimerId String?   @unique
+  legalBasis                String?
+  consentNote               String?
+  retentionRedactedAt       DateTime?
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
 
@@ -154,6 +191,7 @@ model Member {
   createdBy               User           @relation("CreatedBy", fields: [createdById], references: [id])
   convertedFromFirstTimer FirstTimer?    @relation(fields: [convertedFromFirstTimerId], references: [id])
   reports                 MemberReport[]
+  cases                   Case[]
 
   @@map("members")
 }
@@ -175,6 +213,7 @@ model MemberReport {
   member     Member @relation(fields: [memberId], references: [id])
   leader     User   @relation("ReportedBy", fields: [leaderId], references: [id])
   redactedBy User?  @relation("RedactedBy", fields: [redactedById], references: [id])
+  openedCases Case[] @relation("OpenedCase")
 
   @@map("member_reports")
 }
@@ -194,6 +233,9 @@ model FirstTimer {
   convertedAt       DateTime?
   convertedMemberId String?
   isActive          Boolean          @default(true)
+  legalBasis        String?
+  consentNote       String?
+  retentionRedactedAt DateTime?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
@@ -219,6 +261,39 @@ model FirstTimerReport {
   reportedBy User       @relation(fields: [reportedById], references: [id])
 
   @@map("first_timer_reports")
+}
+
+// A concern or safety flag that someone owns until it is closed.
+// At most one open case per member per kind — a repeat report touches the
+// existing case rather than opening a duplicate.
+model Case {
+  id               String     @id @default(uuid())
+  kind             CaseKind
+  status           CaseStatus @default(open)
+  memberId         String
+  openedByReportId String?
+  ownerId          String?
+  dueDate          DateTime?
+  actionPlan       String?
+  acknowledgedAt   DateTime?
+  acknowledgedById String?
+  resolvedAt       DateTime?
+  resolvedById     String?
+  resolutionNote   String?
+  lastEscalatedAt  DateTime?
+  reportCount      Int        @default(1)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  // Relations
+  member         Member        @relation(fields: [memberId], references: [id])
+  openedByReport MemberReport? @relation("OpenedCase", fields: [openedByReportId], references: [id])
+  owner          User?         @relation("CaseOwner", fields: [ownerId], references: [id])
+  acknowledgedBy User?         @relation("CaseAcknowledgedBy", fields: [acknowledgedById], references: [id])
+  resolvedBy     User?         @relation("CaseResolvedBy", fields: [resolvedById], references: [id])
+
+  @@index([status, kind])
+  @@map("cases")
 }
 
 model ActivityLog {

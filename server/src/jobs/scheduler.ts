@@ -2,6 +2,8 @@ import cron from 'node-cron';
 import { prisma } from '../lib/prisma';
 import { settingsService } from '../services/settings.service';
 import { notificationsService } from '../services/notifications.service';
+import { casesService } from '../services/cases.service';
+import { privacyService } from '../services/privacy.service';
 
 const TZ = 'Africa/Accra'; // UTC+0 — weekday/start-of-day computed with UTC methods
 
@@ -91,7 +93,20 @@ export async function runSilenceDetection(now: Date = new Date()): Promise<void>
   }
 }
 
-/** Register both cron jobs. Called once on server boot (never under test). */
+/**
+ * Safety escalation: hourly, because a safeguarding acknowledgement window is
+ * measured in hours, not days. The dedupe lives in the service.
+ */
+export async function runSafetyEscalation(now: Date = new Date()): Promise<void> {
+  await casesService.escalateStaleSafetyCases(now);
+}
+
+/** Retention review: daily. Flags only — redaction is always a pastor's act. */
+export async function runRetentionReview(now: Date = new Date()): Promise<void> {
+  await privacyService.notifyRetentionDue(now);
+}
+
+/** Register the cron jobs. Called once on server boot (never under test). */
 export function startScheduler(): void {
   cron.schedule(
     '0 8 * * *',
@@ -109,5 +124,23 @@ export function startScheduler(): void {
     { timezone: TZ }
   );
 
-  console.log('[scheduler] report-reminder (08:00) + silence-detection (07:00) registered — Africa/Accra');
+  cron.schedule(
+    '30 7 * * *',
+    () => {
+      runRetentionReview().catch((err) => console.error('[cron:retention-review]', err));
+    },
+    { timezone: TZ }
+  );
+
+  cron.schedule(
+    '0 * * * *',
+    () => {
+      runSafetyEscalation().catch((err) => console.error('[cron:safety-escalation]', err));
+    },
+    { timezone: TZ }
+  );
+
+  console.log(
+    '[scheduler] report-reminder (08:00) + silence-detection (07:00) + retention-review (07:30) + safety-escalation (hourly) registered — Africa/Accra'
+  );
 }

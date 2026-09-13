@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, Card } from '../../components/ui';
+import { CasesPanel } from '../../components/cases/CasesPanel';
 import { IconPlus } from '../../components/ui/icons';
 import { ReportModal } from '../../components/reports/ReportModal';
 import { getMember, listMemberReports } from '../../lib/api';
@@ -100,6 +101,14 @@ export default function LeaderMemberProfile() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="mt-6">
+        <CasesPanel
+          memberId={member.id}
+          title="Cases"
+          emptyText="No open cases on this member."
+        />
       </div>
 
       <ReportModal

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, Card, Field, Modal, Select } from '../../components/ui';
 import { convertFirstTimer, getFirstTimer, listFirstTimerReports, listUsers } from '../../lib/api';
+import { PrivacyCard } from '../../components/PrivacyCard';
 import { callOutcomeLabels, ftStatusMeta } from '../../lib/firstTimers';
 import { relativeDate } from '../../lib/utils';
 import type { FirstTimer, FirstTimerReport, User } from '../../types';
@@ -101,6 +102,17 @@ export default function PastorFirstTimerProfile() {
           ))}
         </ol>
       )}
+
+      <div className="mt-6">
+        <PrivacyCard
+          type="first_timer"
+          id={ft.id}
+          name={`${ft.firstName} ${ft.lastName}`}
+          legalBasis={ft.legalBasis}
+          consentNote={ft.consentNote}
+          onSaved={reload}
+        />
+      </div>
 
       <ConvertModal open={showConvert} onClose={() => setShowConvert(false)} firstTimerId={id} />
     </AppShell>

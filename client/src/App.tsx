@@ -7,6 +7,10 @@ import { homePathForRole } from './lib/roles';
 import Login from './pages/Login';
 import PastorDashboard from './pages/pastor/Dashboard';
 import PastorUsers from './pages/pastor/Users';
+import PastorLeaders from './pages/pastor/Leaders';
+import PastorGroups from './pages/pastor/Groups';
+import PastorInsights from './pages/pastor/Insights';
+import PastorPrivacy from './pages/pastor/Privacy';
 import PastorMembers from './pages/pastor/Members';
 import PastorMemberNew from './pages/pastor/MemberNew';
 import PastorMemberProfile from './pages/pastor/MemberProfile';
@@ -84,6 +88,38 @@ export default function App() {
               element={
                 <RequireRole roles={['pastor']}>
                   <PastorFirstTimerProfile />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/pastor/leaders"
+              element={
+                <RequireRole roles={['pastor']}>
+                  <PastorLeaders />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/pastor/groups"
+              element={
+                <RequireRole roles={['pastor']}>
+                  <PastorGroups />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/pastor/insights"
+              element={
+                <RequireRole roles={['pastor']}>
+                  <PastorInsights />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/pastor/privacy"
+              element={
+                <RequireRole roles={['pastor']}>
+                  <PastorPrivacy />
                 </RequireRole>
               }
             />

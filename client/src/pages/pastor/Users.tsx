@@ -3,6 +3,7 @@ import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, Field, Input, Modal, Select } from '../../components/ui';
 import { IconPlus } from '../../components/ui/icons';
 import { createUser, deactivateUser, listUsers } from '../../lib/api';
+import { PasswordModal } from '../../components/PasswordModal';
 import { roleLabels } from '../../lib/roles';
 import { useAuth } from '../../hooks/useAuth';
 import type { User, UserRole } from '../../types';
@@ -15,6 +16,7 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [resetTarget, setResetTarget] = useState<User | null>(null);
 
   async function refresh() {
     setLoading(true);
@@ -96,13 +98,23 @@ export default function Users() {
                       {new Date(u.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-5 py-3 text-right">
-                      {u.isActive && u.id !== me?.id && (
-                        <button
-                          onClick={() => handleDeactivate(u)}
-                          className="text-caption font-medium text-concern transition hover:underline"
-                        >
-                          Deactivate
-                        </button>
+                      {u.isActive && (
+                        <div className="flex justify-end gap-3">
+                          <button
+                            onClick={() => setResetTarget(u)}
+                            className="text-caption font-medium text-muted transition hover:text-ink-2 hover:underline"
+                          >
+                            Reset password
+                          </button>
+                          {u.id !== me?.id && (
+                            <button
+                              onClick={() => handleDeactivate(u)}
+                              className="text-caption font-medium text-concern transition hover:underline"
+                            >
+                              Deactivate
+                            </button>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -112,6 +124,12 @@ export default function Users() {
           </div>
         )}
       </div>
+
+      <PasswordModal
+        open={resetTarget !== null}
+        onClose={() => setResetTarget(null)}
+        target={resetTarget ? { id: resetTarget.id, fullName: resetTarget.fullName } : undefined}
+      />
 
       <CreateUserModal
         open={modalOpen}

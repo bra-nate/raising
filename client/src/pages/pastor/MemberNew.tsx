@@ -2,12 +2,13 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { Button, Card, Field, Input, Select } from '../../components/ui';
-import { createMember, listUsers } from '../../lib/api';
-import type { User } from '../../types';
+import { createMember, listGroups, listUsers } from '../../lib/api';
+import type { Group, User } from '../../types';
 
 export default function PastorMemberNew() {
   const navigate = useNavigate();
   const [leaders, setLeaders] = useState<User[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -15,6 +16,7 @@ export default function PastorMemberNew() {
     email: '',
     address: '',
     assignedLeaderId: '',
+    groupId: '',
   });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -23,6 +25,9 @@ export default function PastorMemberNew() {
     listUsers()
       .then(({ data }) => setLeaders(data.filter((u) => u.role === 'leader' && u.isActive)))
       .catch(() => setError('Could not load leaders.'));
+    listGroups()
+      .then(({ data }) => setGroups(data))
+      .catch(() => setError('Could not load groups.'));
   }, []);
 
   function set(field: keyof typeof form) {
@@ -69,6 +74,18 @@ export default function PastorMemberNew() {
                   {l.fullName}
                 </option>
               ))}
+            </Select>
+          </Field>
+          <Field label="Group" hint="Optional — groups belonging to the selected leader.">
+            <Select value={form.groupId} onChange={set('groupId')}>
+              <option value="">No group</option>
+              {groups
+                .filter((g) => !form.assignedLeaderId || g.leaderId === form.assignedLeaderId)
+                .map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
             </Select>
           </Field>
           <Field label="Phone" hint="Optional">

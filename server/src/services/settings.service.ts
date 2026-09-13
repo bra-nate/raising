@@ -29,6 +29,11 @@ const WRITABLE_KEYS = [
   'deletePermission',
   'notificationsEnabled',
   'reportReminderDay',
+  'safetyAckHours',
+  'concernDueDays',
+  'firstContactDays',
+  'retentionMonths',
+  'retentionMode',
 ] as const;
 
 async function update(actorId: string, key: string, value: string) {
@@ -40,9 +45,10 @@ async function update(actorId: string, key: string, value: string) {
   }
 
   const existing = await prisma.setting.findUnique({ where: { key } });
-  const updated = await prisma.setting.update({
+  const updated = await prisma.setting.upsert({
     where: { key },
-    data: { value, updatedById: actorId },
+    update: { value, updatedById: actorId },
+    create: { key, value, updatedById: actorId },
   });
 
   await writeLog({

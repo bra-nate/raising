@@ -36,6 +36,40 @@ const FIELDS: Array<{
       label: d.charAt(0).toUpperCase() + d.slice(1),
     })),
   },
+  {
+    key: 'safetyAckHours',
+    label: 'Safety acknowledgement window (hours)',
+    help: 'How long a safety case may sit unacknowledged before it escalates to the pastor.',
+    type: 'number',
+  },
+  {
+    key: 'concernDueDays',
+    label: 'Concern case due (days)',
+    help: 'How long a concern case has before it counts as overdue.',
+    type: 'number',
+  },
+  {
+    key: 'firstContactDays',
+    label: 'First contact window (days)',
+    help: 'How long after a visit a first-timer may wait for their first call.',
+    type: 'number',
+  },
+  {
+    key: 'retentionMonths',
+    label: 'Retention (months)',
+    help: 'Months of inactivity before a closed record is flagged for review. 0 retains indefinitely.',
+    type: 'number',
+  },
+  {
+    key: 'retentionMode',
+    label: 'Retention action',
+    help: 'Flagged records are always reported. Redaction, when enabled, is still a deliberate act.',
+    type: 'select',
+    options: [
+      { value: 'report_only', label: 'Report only' },
+      { value: 'report_and_redact', label: 'Allow redaction' },
+    ],
+  },
 ];
 
 export default function Settings() {

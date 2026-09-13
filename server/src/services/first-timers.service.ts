@@ -4,6 +4,7 @@ import { AppError } from '../lib/errors';
 import { JwtPayload } from '../lib/jwt';
 import { writeLog } from './activity-log.service';
 import { notificationsService } from './notifications.service';
+import { settingsService } from './settings.service';
 
 const FT_INCLUDE = {
   assignedTo: { select: { fullName: true } },
@@ -198,6 +199,16 @@ async function updateFirstTimer(user: JwtPayload, id: string, input: UpdateFirst
 
   const ft = await prisma.firstTimer.update({ where: { id }, data, include: FT_INCLUDE });
 
+  if (input.assignedToId !== undefined && existing.assignedToId !== input.assignedToId) {
+    await writeLog({
+      userId: user.id,
+      action: 'assigned_first_timer',
+      entityType: 'first_timer',
+      entityId: ft.id,
+      metadata: { to: input.assignedToId, from: existing.assignedToId },
+    });
+  }
+
   if (notifyAssignee) {
     await notificationsService.createNotification({
       userId: notifyAssignee,
@@ -266,7 +277,150 @@ async function convertToMember(user: JwtPayload, id: string, input: ConvertInput
   return member;
 }
 
+// ── Queue ─────────────────────────────────────
+
+const QUEUE_INCLUDE = {
+  assignedTo: { select: { id: true, fullName: true } },
+  reports: {
+    orderBy: { createdAt: 'desc' as const },
+    take: 1,
+    select: { createdAt: true, callOutcome: true },
+  },
+} as const;
+
+type QueueRow = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  visitDate: Date;
+  serviceName: string | null;
+  status: string;
+  assignedToId: string | null;
+  assignedTo: { id: string; fullName: string } | null;
+  reports: { createdAt: Date; callOutcome: string }[];
+};
+
+function startOfDay(d: Date): number {
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}
+
+/**
+ * The working queue for the follow-up team. Everything here is derived in the
+ * service — "due", "overdue" and "aging" are policy, not presentation, and the
+ * frontend must never recompute them.
+ *
+ * A visitor is due `firstContactDays` after their visit and stays due until
+ * somebody logs a call. Once contacted they leave the queue unless the last
+ * outcome asked for a callback.
+ */
+async function getQueue(user: JwtPayload, now = new Date()) {
+  const firstContactDays = await settingsService.getNumber('firstContactDays', 2);
+
+  const where =
+    user.role === 'followup_team_member'
+      ? { isActive: true, OR: [{ assignedToId: user.id }, { assignedToId: null }] }
+      : { isActive: true };
+
+  const rows = (await prisma.firstTimer.findMany({
+    where: { ...where, status: { not: 'converted' as const } },
+    include: QUEUE_INCLUDE,
+    orderBy: { visitDate: 'asc' },
+  })) as unknown as QueueRow[];
+
+  const today = startOfDay(now);
+
+  const shape = (r: QueueRow) => {
+    const last = r.reports[0] ?? null;
+    const dueAt = new Date(r.visitDate.getTime() + firstContactDays * 86_400_000);
+    return {
+      id: r.id,
+      firstName: r.firstName,
+      lastName: r.lastName,
+      phone: r.phone,
+      visitDate: r.visitDate,
+      serviceName: r.serviceName,
+      status: r.status,
+      assignedToId: r.assignedToId,
+      assignedTo: r.assignedTo,
+      lastAttemptAt: last?.createdAt ?? null,
+      lastOutcome: last?.callOutcome ?? null,
+      attempts: r.reports.length,
+      dueAt,
+      ageDays: Math.floor((today - startOfDay(r.visitDate)) / 86_400_000),
+    };
+  };
+
+  const all = rows.map(shape);
+
+  // Never contacted and past the first-contact window.
+  const uncontacted = all.filter((r) => r.lastAttemptAt === null);
+  const overdue = uncontacted.filter((r) => startOfDay(r.dueAt) < today);
+  const dueToday = uncontacted.filter((r) => startOfDay(r.dueAt) === today);
+  const upcoming = uncontacted.filter((r) => startOfDay(r.dueAt) > today);
+  const callbacks = all.filter((r) => r.lastOutcome === 'callback_requested');
+  const unassigned = all.filter((r) => r.assignedToId === null);
+
+  // Aging buckets measure how long a visitor has gone uncontacted — the number
+  // that matters when asking whether the team is keeping up.
+  const aging = {
+    d0_2: uncontacted.filter((r) => r.ageDays <= 2).length,
+    d3_7: uncontacted.filter((r) => r.ageDays > 2 && r.ageDays <= 7).length,
+    d8_14: uncontacted.filter((r) => r.ageDays > 7 && r.ageDays <= 14).length,
+    d15plus: uncontacted.filter((r) => r.ageDays > 14).length,
+  };
+
+  // Workload is a lead/pastor view — a team member has no business seeing it.
+  const workload =
+    user.role === 'followup_team_member'
+      ? []
+      : Object.values(
+          all
+            .filter((r) => r.assignedTo)
+            .reduce<Record<string, { userId: string; fullName: string; open: number; overdue: number }>>(
+              (acc, r) => {
+                const key = r.assignedTo!.id;
+                acc[key] ??= { userId: key, fullName: r.assignedTo!.fullName, open: 0, overdue: 0 };
+                acc[key].open += 1;
+                if (r.lastAttemptAt === null && startOfDay(r.dueAt) < today) acc[key].overdue += 1;
+                return acc;
+              },
+              {}
+            )
+        ).sort((a, b) => b.open - a.open);
+
+  // The roster a lead can assign to. Returned here rather than opening the
+  // pastor-only /users route to another role.
+  const assignees =
+    user.role === 'followup_team_member'
+      ? []
+      : await prisma.user.findMany({
+          where: { isActive: true, role: { in: ['followup_team_lead', 'followup_team_member'] } },
+          select: { id: true, fullName: true },
+          orderBy: { fullName: 'asc' },
+        });
+
+  return {
+    dueToday,
+    overdue,
+    upcoming,
+    callbacks,
+    unassigned,
+    aging,
+    workload,
+    assignees,
+    counts: {
+      total: all.length,
+      dueToday: dueToday.length,
+      overdue: overdue.length,
+      callbacks: callbacks.length,
+      unassigned: unassigned.length,
+    },
+  };
+}
+
 export const firstTimersService = {
+  getQueue,
   listFirstTimers,
   getFirstTimer,
   createFirstTimer,

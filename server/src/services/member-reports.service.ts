@@ -5,6 +5,7 @@ import { JwtPayload } from '../lib/jwt';
 import { writeLog } from './activity-log.service';
 import { settingsService } from './settings.service';
 import { notificationsService } from './notifications.service';
+import { openCaseForReport } from './cases.service';
 
 const VALID_STATUS: StatusTag[] = ['good', 'needs_attention', 'concern'];
 
@@ -83,7 +84,9 @@ async function createReport(user: JwtPayload, input: CreateReportInput) {
   const isSafetyFlagged = Boolean(input.isSafetyFlagged);
   const isConfidential = Boolean(input.isConfidential);
 
-  // Report insert + lastReportDate update + audit log are one atomic unit.
+  const concernDueDays = await settingsService.getNumber('concernDueDays', 7);
+
+  // Report insert + lastReportDate update + case + audit log are one atomic unit.
   const report = await prisma.$transaction(async (tx) => {
     const created = await tx.memberReport.create({
       data: {
@@ -98,6 +101,9 @@ async function createReport(user: JwtPayload, input: CreateReportInput) {
     });
 
     await tx.member.update({ where: { id: member.id }, data: { lastReportDate: created.createdAt } });
+
+    // A report that names a problem opens a case that someone must close.
+    await openCaseForReport(tx, created, member.id, concernDueDays);
 
     await writeLog({
       userId: user.id,

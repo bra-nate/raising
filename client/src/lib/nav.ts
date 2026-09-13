@@ -1,6 +1,6 @@
 import type { ComponentType, SVGProps } from 'react';
 import type { UserRole } from '../types';
-import { IconGrid, IconUsers, IconPeople, IconPhone, IconActivity, IconSettings } from '../components/ui/icons';
+import { IconGrid, IconUsers, IconPeople, IconPhone, IconActivity, IconLock, IconSettings, IconReports } from '../components/ui/icons';
 
 export interface NavItem {
   label: string;
@@ -37,6 +37,9 @@ export function navForRole(role: UserRole): NavGroup[] {
           heading: 'Records',
           items: [
             { label: 'Members', to: '/pastor/members', icon: IconPeople },
+            { label: 'Leaders', to: '/pastor/leaders', icon: IconReports },
+            { label: 'Groups', to: '/pastor/groups', icon: IconUsers },
+            { label: 'Insights', to: '/pastor/insights', icon: IconActivity },
             { label: 'First-Timers', to: '/pastor/first-timers', icon: IconPhone },
           ],
         },
@@ -45,6 +48,7 @@ export function navForRole(role: UserRole): NavGroup[] {
           items: [
             { label: 'Users', to: '/pastor/users', icon: IconUsers },
             { label: 'Activity Log', to: '/pastor/logs', icon: IconActivity },
+            { label: 'Privacy', to: '/pastor/privacy', icon: IconLock },
             { label: 'Settings', to: '/pastor/settings', icon: IconSettings },
           ],
         },

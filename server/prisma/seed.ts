@@ -11,6 +11,11 @@ async function main() {
     { key: 'deletePermission', value: 'pastor_only', description: 'pastor_only | leaders' },
     { key: 'notificationsEnabled', value: 'true', description: 'Master toggle for in-app notifications' },
     { key: 'reportReminderDay', value: 'friday', description: 'Day of week for leader report reminders' },
+    { key: 'safetyAckHours', value: '4', description: 'Hours before an unacknowledged safety case escalates' },
+    { key: 'concernDueDays', value: '7', description: 'Days a concern case has before it is overdue' },
+    { key: 'firstContactDays', value: '2', description: 'Days after a visit before first contact is overdue' },
+    { key: 'retentionMonths', value: '0', description: 'Months of inactivity before a record is flagged; 0 = retain indefinitely' },
+    { key: 'retentionMode', value: 'report_only', description: 'report_only | report_and_redact' },
   ];
 
   for (const s of settings) {

@@ -4,6 +4,7 @@ import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Card } from '../../components/ui';
 import { IconLock } from '../../components/ui/icons';
 import { RecentActivityPanel } from '../../components/dashboard/RecentActivityPanel';
+import { CasesPanel } from '../../components/cases/CasesPanel';
 import { getPastorDashboard } from '../../lib/api';
 import { fullName, relativeDate, silenceMeta, statusMeta } from '../../lib/utils';
 import { useAuth } from '../../hooks/useAuth';
@@ -122,6 +123,7 @@ export default function PastorDashboard() {
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
+            <CasesPanel />
             <RecentActivityPanel viewAllTo="/pastor/logs" />
           </div>
         </>

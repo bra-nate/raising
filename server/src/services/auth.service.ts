@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { prisma } from '../lib/prisma';
 import { signToken } from '../lib/jwt';
 import { AppError } from '../lib/errors';
+import { assertValidPassword, hashPassword } from '../lib/password';
 import { writeLog } from './activity-log.service';
 
 export interface AuthUser {
@@ -51,4 +52,29 @@ async function getProfile(userId: string): Promise<AuthUser> {
   return { id: user.id, fullName: user.fullName, email: user.email, role: user.role };
 }
 
-export const authService = { login, getProfile };
+async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || !user.isActive) throw new AppError(401, 'Unauthorized');
+
+  const match = await bcrypt.compare(currentPassword, user.password);
+  if (!match) throw new AppError(400, 'Current password is incorrect');
+
+  assertValidPassword(newPassword);
+  if (newPassword === currentPassword) {
+    throw new AppError(400, 'New password must be different from the current one');
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: await hashPassword(newPassword) },
+  });
+
+  await writeLog({
+    userId,
+    action: 'changed_password',
+    entityType: 'user',
+    entityId: userId,
+  });
+}
+
+export const authService = { login, getProfile, changePassword };

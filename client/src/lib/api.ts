@@ -3,13 +3,20 @@ import type {
   ActivityLog,
   ApiList,
   AuthUser,
+  CareCase,
+  CaseKind,
   CallOutcome,
   FirstTimer,
   FirstTimerReport,
   FirstTimerStatus,
+  FollowUpQueue,
+  Group,
   Member,
   MemberReport,
+  Metrics,
+  ConfidentialAccessReview,
   Notification,
+  RetentionCandidate,
   PastorDashboard,
   StatusTag,
   User,
@@ -62,6 +69,120 @@ export async function getMe(): Promise<AuthUser> {
   return data;
 }
 
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await api.post('/auth/change-password', { currentPassword, newPassword });
+}
+
+// ── Privacy ───────────────────────────────────
+export async function listRetentionCandidates(): Promise<{
+  retentionMonths: number;
+  data: RetentionCandidate[];
+  total: number;
+}> {
+  const { data } = await api.get('/privacy/retention');
+  return data;
+}
+
+export async function redactForRetention(type: 'member' | 'first_timer', id: string): Promise<void> {
+  await api.post(`/privacy/retention/${type}/${id}/redact`);
+}
+
+export async function exportPersonData(type: 'member' | 'first_timer', id: string): Promise<unknown> {
+  const { data } = await api.get(`/privacy/export/${type}/${id}`);
+  return data;
+}
+
+export async function getConfidentialAccessReview(days = 90): Promise<ConfidentialAccessReview> {
+  const { data } = await api.get('/privacy/confidential-access', { params: { days } });
+  return data;
+}
+
+export async function setLegalBasis(
+  type: 'member' | 'first_timer',
+  id: string,
+  input: { legalBasis?: string; consentNote?: string }
+): Promise<void> {
+  await api.patch(`/privacy/legal-basis/${type}/${id}`, input);
+}
+
+// ── Metrics ───────────────────────────────────
+export async function getMetrics(): Promise<Metrics> {
+  const { data } = await api.get('/metrics');
+  return data;
+}
+
+export async function exportMetricsCsv(): Promise<Blob> {
+  const { data } = await api.get('/metrics/export.csv', { responseType: 'blob' });
+  return data;
+}
+
+// ── Groups ────────────────────────────────────
+export async function listGroups(): Promise<ApiList<Group>> {
+  const { data } = await api.get('/groups');
+  return data;
+}
+
+export async function createGroup(input: { name: string; leaderId: string }): Promise<Group> {
+  const { data } = await api.post('/groups', input);
+  return data;
+}
+
+export async function updateGroup(id: string, input: { name?: string; leaderId?: string }): Promise<Group> {
+  const { data } = await api.patch(`/groups/${id}`, input);
+  return data;
+}
+
+export async function moveGroupMembers(id: string, targetGroupId: string | null): Promise<{ moved: number }> {
+  const { data } = await api.patch(`/groups/${id}/move-members`, { targetGroupId });
+  return data;
+}
+
+export async function deleteGroup(id: string): Promise<{ id: string }> {
+  const { data } = await api.delete(`/groups/${id}`);
+  return data;
+}
+
+// ── Follow-up queue ───────────────────────────
+export async function getFollowUpQueue(): Promise<FollowUpQueue> {
+  const { data } = await api.get('/first-timers/queue');
+  return data;
+}
+
+export async function assignFirstTimer(id: string, assignedToId: string | null): Promise<FirstTimer> {
+  const { data } = await api.patch(`/first-timers/${id}/assign`, { assignedToId });
+  return data;
+}
+
+// ── Cases ─────────────────────────────────────
+export async function listCases(params: {
+  status?: 'open' | 'resolved' | 'all';
+  kind?: CaseKind;
+  memberId?: string;
+} = {}): Promise<ApiList<CareCase>> {
+  const { data } = await api.get('/cases', { params });
+  return data;
+}
+
+export async function acknowledgeCase(id: string): Promise<CareCase> {
+  const { data } = await api.patch(`/cases/${id}/acknowledge`);
+  return data;
+}
+
+export async function assignCase(id: string, ownerId: string): Promise<CareCase> {
+  const { data } = await api.patch(`/cases/${id}/assign`, { ownerId });
+  return data;
+}
+
+export async function updateCase(id: string, input: { actionPlan?: string; dueDate?: string }): Promise<CareCase> {
+  const { data } = await api.patch(`/cases/${id}`, input);
+  return data;
+}
+
+export async function resolveCase(id: string, resolutionNote: string): Promise<CareCase> {
+  const { data } = await api.patch(`/cases/${id}/resolve`, { resolutionNote });
+  return data;
+}
+
 // ── Users (pastor) ────────────────────────────
 export async function listUsers(): Promise<ApiList<User>> {
   const { data } = await api.get('/users');
@@ -81,6 +202,10 @@ export async function createUser(input: {
 export async function updateUser(id: string, input: { fullName?: string; role?: UserRole }): Promise<User> {
   const { data } = await api.patch(`/users/${id}`, input);
   return data;
+}
+
+export async function resetUserPassword(id: string, newPassword: string): Promise<void> {
+  await api.patch(`/users/${id}/password`, { newPassword });
 }
 
 export async function deactivateUser(id: string): Promise<User> {
@@ -106,6 +231,7 @@ export interface MemberInput {
   email?: string;
   address?: string;
   assignedLeaderId?: string;
+  groupId?: string;
 }
 
 export async function createMember(input: MemberInput): Promise<Member> {

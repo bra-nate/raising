@@ -27,6 +27,14 @@ router.post(
 );
 
 // Must precede '/:id'.
+router.get(
+  '/queue',
+  requireRole(...FOLLOWUP),
+  asyncHandler(async (req, res) => {
+    res.json(await firstTimersService.getQueue(req.user!));
+  })
+);
+
 router.post(
   '/batch',
   requireRole(...FOLLOWUP),
@@ -49,6 +57,21 @@ router.patch(
   requireRole('pastor', 'followup_team_lead'),
   asyncHandler(async (req, res) => {
     res.json(await firstTimersService.updateFirstTimer(req.user!, req.params.id, req.body ?? {}));
+  })
+);
+
+// Explicit assignment. Team leads and the pastor assign; the unassigned pool
+// stays claimable by logging a call.
+router.patch(
+  '/:id/assign',
+  requireRole('pastor', 'followup_team_lead'),
+  asyncHandler(async (req, res) => {
+    const { assignedToId } = req.body ?? {};
+    res.json(
+      await firstTimersService.updateFirstTimer(req.user!, req.params.id, {
+        assignedToId: assignedToId ?? null,
+      })
+    );
   })
 );
 

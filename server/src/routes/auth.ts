@@ -32,4 +32,17 @@ router.get(
   })
 );
 
+router.post(
+  '/change-password',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const { currentPassword, newPassword } = req.body ?? {};
+    if (!currentPassword || !newPassword) {
+      throw new AppError(400, 'currentPassword and newPassword are required');
+    }
+    await authService.changePassword(req.user!.id, String(currentPassword), String(newPassword));
+    res.json({ ok: true });
+  })
+);
+
 export default router;
