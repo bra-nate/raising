@@ -14,7 +14,7 @@ export default function PastorMembers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
-  const [leader, setLeader] = useState('all');
+  const [leader, setLeader] = useState(params.get('leader') || 'all');
   const [group, setGroup] = useState('all');
   const [status, setStatus] = useState<'all' | StatusTag>((params.get('status') as StatusTag) || 'all');
   const [silence, setSilence] = useState<'all' | SilenceStatus>((params.get('silence') as SilenceStatus) || 'all');
@@ -36,10 +36,11 @@ export default function PastorMembers() {
   // Keep status/silence in the URL so dashboard stat cards can deep-link here.
   useEffect(() => {
     const next = new URLSearchParams();
+    if (leader !== 'all') next.set('leader', leader);
     if (status !== 'all') next.set('status', status);
     if (silence !== 'all') next.set('silence', silence);
     setParams(next, { replace: true });
-  }, [status, silence, setParams]);
+  }, [leader, status, silence, setParams]);
 
   const leaders = useMemo(
     () => Array.from(new Set(members.map((m) => m.assignedLeader?.fullName).filter(Boolean))) as string[],
