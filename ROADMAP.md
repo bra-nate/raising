@@ -63,6 +63,8 @@ unacknowledged, and cannot be closed without a resolution note.
 ### 9.2 Queue data
 - [x] `GET /first-timers/queue`: due today, overdue, aging buckets, last attempt
       date and outcome, scheduled callbacks, per-assignee workload
+- [x] `callbackAt` on a call report — a callback with a future date is scheduled
+      work, not outstanding work; one with no date stays due
 - [x] Settings: `firstContactDays` (default 2) — what "due" means
 
 ### 9.3 Frontend
@@ -131,3 +133,39 @@ how long" and produce it.
 - [x] This roadmap folded into PHASE.md as phases 8–12
 
 **Exit:** the repository is the source of truth again.
+
+---
+
+## Review fixes — 2026-09-14
+
+A review of phases 8–12 found seven issues. Six were code; the seventh is the
+deployment list, which PHASE.md already tracks as open.
+
+- [x] **Superadmin reached pastoral data.** `requireRole('pastor', 'superadmin')`
+      was written out of habit onto cases, privacy, metrics and groups. The
+      superadmin design puts a platform administrator *beside* the pastor for
+      accounts, settings and audit — never above them for pastoral data, and the
+      subject-access export returns full report content including confidential
+      and safety-flagged reports. Those four route files are now pastor-only,
+      and `src/test/superadmin-boundary.test.ts` pins the whole boundary so it
+      cannot regress by habit again.
+- [x] **Case ownership was unrestricted.** Any active user could be made owner,
+      and the assignment notification alone discloses the member's name and the
+      case kind. Owners are now the pastor or the member's own assigned leader;
+      a safety case may only be owned by a pastor. The eligible set travels with
+      each case as `assignableOwners` so the UI never offers a rejected choice.
+- [x] **Case assignment and due dates had no UI.** The panel showed an owner but
+      offered no way to set one. Both controls are now on the case card.
+- [x] **Callbacks were not scheduled.** They were an outcome bucket with no date,
+      so a callback appeared immediately and stayed outstanding forever. Added
+      `FirstTimerReport.callbackAt`, a date field on the call form, and a
+      separate scheduled-vs-due split in the queue.
+- [x] **Queue attempt totals were wrong.** `attempts` read `reports.length` on a
+      query with `take: 1`, so it could only ever be 0 or 1. Now a `_count`.
+- [x] **Deleting the newest report left silence stale.** `lastReportDate` is a
+      cache that only `createReport` maintained, so deleting the newest report
+      left a member looking recently covered by a report that no longer exists —
+      feeding silence, reminders, leader consistency and group risk. Deletion now
+      recomputes it inside the same transaction.
+- [x] **Subject access export was JSON-only.** CSV added, matching the metrics
+      export, because a subject access request is answered to a person.

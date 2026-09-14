@@ -67,6 +67,8 @@ interface CreateReportInput {
   firstTimerId?: string;
   callOutcome?: CallOutcome;
   content?: string;
+  /** Only meaningful when the outcome is callback_requested. */
+  callbackAt?: string;
 }
 
 async function createReport(user: JwtPayload, input: CreateReportInput) {
@@ -75,6 +77,15 @@ async function createReport(user: JwtPayload, input: CreateReportInput) {
     throw new AppError(400, 'A valid callOutcome is required');
   }
   const ft = await loadFirstTimerForUser(user, input.firstTimerId);
+
+  // A callback date only means something on a callback. Anything else is
+  // dropped rather than silently stored against the wrong outcome.
+  let callbackAt: Date | null = null;
+  if (input.callOutcome === 'callback_requested' && input.callbackAt) {
+    const parsed = new Date(input.callbackAt);
+    if (Number.isNaN(parsed.getTime())) throw new AppError(400, 'callbackAt must be a valid date');
+    callbackAt = parsed;
+  }
 
   const report = await prisma.$transaction(async (tx) => {
     // Claim-on-call: a team member logging the first call on an unassigned
@@ -97,6 +108,7 @@ async function createReport(user: JwtPayload, input: CreateReportInput) {
         reportedById: user.id,
         callOutcome: input.callOutcome!,
         content: input.content?.trim() || null,
+        callbackAt,
       },
       include: REPORT_INCLUDE,
     });
@@ -112,7 +124,7 @@ async function createReport(user: JwtPayload, input: CreateReportInput) {
       action: 'submitted_first_timer_report',
       entityType: 'first_timer_report',
       entityId: created.id,
-      metadata: { firstTimerId: ft.id, callOutcome: input.callOutcome },
+      metadata: { firstTimerId: ft.id, callOutcome: input.callOutcome, callbackAt },
       tx,
     });
 

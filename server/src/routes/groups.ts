@@ -11,13 +11,13 @@ router.use(authenticate);
 // A leader may read their own groups; only the pastor restructures them.
 router.get(
   '/',
-  requireRole('pastor', 'superadmin', 'leader'),
+  requireRole('pastor', 'leader'),
   asyncHandler(async (req, res) => {
     res.json(await groupsService.listGroups(req.user!));
   })
 );
 
-router.use(requireRole('pastor', 'superadmin'));
+router.use(requireRole('pastor'));
 
 router.post(
   '/',

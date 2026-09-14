@@ -92,6 +92,14 @@ export async function exportPersonData(type: 'member' | 'first_timer', id: strin
   return data;
 }
 
+export async function exportPersonCsv(type: 'member' | 'first_timer', id: string): Promise<Blob> {
+  const { data } = await api.get(`/privacy/export/${type}/${id}`, {
+    params: { format: 'csv' },
+    responseType: 'blob',
+  });
+  return data;
+}
+
 export async function getConfidentialAccessReview(days = 90): Promise<ConfidentialAccessReview> {
   const { data } = await api.get('/privacy/confidential-access', { params: { days } });
   return data;
@@ -376,6 +384,8 @@ export interface FirstTimerReportInput {
   firstTimerId: string;
   callOutcome: CallOutcome;
   content?: string;
+  /** Only honoured when callOutcome is callback_requested. */
+  callbackAt?: string;
 }
 export async function createFirstTimerReport(input: FirstTimerReportInput): Promise<FirstTimerReport> {
   const { data } = await api.post('/first-timer-reports', input);

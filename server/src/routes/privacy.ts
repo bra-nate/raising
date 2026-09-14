@@ -7,8 +7,9 @@ import { AppError } from '../lib/errors';
 
 const router = Router();
 
-// Retention, subject access and access review are all pastor oversight.
-router.use(authenticate, requireRole('pastor', 'superadmin'));
+// Subject-access exports return full report content, confidential and
+// safety-flagged included. Pastor only — a superadmin has no pastoral access.
+router.use(authenticate, requireRole('pastor'));
 
 function parseType(value: string): 'member' | 'first_timer' {
   if (value !== 'member' && value !== 'first_timer') throw new AppError(400, 'type must be member or first_timer');
@@ -34,8 +35,16 @@ router.get(
   '/export/:type/:id',
   asyncHandler(async (req, res) => {
     const type = parseType(req.params.type);
-    const data = await privacyService.exportPerson(req.user!, type, req.params.id);
-    res.json(data);
+
+    if (req.query.format === 'csv') {
+      const csv = await privacyService.exportPersonCsv(req.user!, type, req.params.id);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${type}-${req.params.id}.csv"`);
+      res.send(csv);
+      return;
+    }
+
+    res.json(await privacyService.exportPerson(req.user!, type, req.params.id));
   })
 );
 

@@ -1,7 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Badge, Button, Card, Field, Input, Modal } from '../ui';
-import { acknowledgeCase, listCases, resolveCase, updateCase } from '../../lib/api';
+import { Badge, Button, Card, Field, Input, Modal, Select } from '../ui';
+import { acknowledgeCase, assignCase, listCases, resolveCase, updateCase } from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
 import { fullName, relativeDate } from '../../lib/utils';
 import type { CareCase } from '../../types';
@@ -53,8 +53,7 @@ export function CasesPanel({
 
   // Safeguarding cases are pastor business — the server enforces this, the UI
   // just avoids offering a button that would 403.
-  const mayAct = (c: CareCase) =>
-    c.kind === 'concern' || user?.role === 'pastor' || user?.role === 'superadmin';
+  const mayAct = (c: CareCase) => c.kind === 'concern' || user?.role === 'pastor';
 
   async function handleAcknowledge(c: CareCase) {
     try {
@@ -62,6 +61,27 @@ export function CasesPanel({
       await refresh();
     } catch {
       alert('Could not acknowledge this case.');
+    }
+  }
+
+  async function handleAssign(c: CareCase, ownerId: string) {
+    try {
+      await assignCase(c.id, ownerId);
+      await refresh();
+    } catch (err) {
+      alert(
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+          'Could not assign this case.'
+      );
+    }
+  }
+
+  async function handleDueDate(c: CareCase, dueDate: string) {
+    try {
+      await updateCase(c.id, { dueDate: new Date(dueDate).toISOString() });
+      await refresh();
+    } catch {
+      alert('Could not change the due date.');
     }
   }
 
@@ -109,21 +129,47 @@ export function CasesPanel({
               {c.actionPlan && <p className="mt-2 text-body text-muted">{c.actionPlan}</p>}
 
               {mayAct(c) && (
-                <div className="mt-3 flex gap-3">
-                  {c.status === 'open' && (
-                    <button
-                      onClick={() => handleAcknowledge(c)}
-                      className="text-caption font-medium text-accent transition hover:underline"
+                <div className="mt-3 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Select
+                      value={c.ownerId ?? ''}
+                      onChange={(e) => handleAssign(c, e.target.value)}
+                      aria-label={`Owner for ${c.member ? fullName(c.member) : 'this case'}`}
+                      disabled={!c.assignableOwners || c.assignableOwners.length === 0}
                     >
-                      Acknowledge
+                      <option value="" disabled>
+                        Unassigned
+                      </option>
+                      {(c.assignableOwners ?? []).map((o) => (
+                        <option key={o.id} value={o.id}>
+                          {o.fullName}
+                        </option>
+                      ))}
+                    </Select>
+                    <Input
+                      type="date"
+                      value={c.dueDate ? c.dueDate.slice(0, 10) : ''}
+                      onChange={(e) => e.target.value && handleDueDate(c, e.target.value)}
+                      aria-label="Due date"
+                      className="max-w-[10rem]"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    {c.status === 'open' && (
+                      <button
+                        onClick={() => handleAcknowledge(c)}
+                        className="text-caption font-medium text-accent transition hover:underline"
+                      >
+                        Acknowledge
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setResolving(c)}
+                      className="text-caption font-medium text-muted transition hover:text-ink-2 hover:underline"
+                    >
+                      Resolve
                     </button>
-                  )}
-                  <button
-                    onClick={() => setResolving(c)}
-                    className="text-caption font-medium text-muted transition hover:text-ink-2 hover:underline"
-                  >
-                    Resolve
-                  </button>
+                  </div>
                 </div>
               )}
             </li>

@@ -6,8 +6,8 @@ import { asyncHandler } from '../lib/asyncHandler';
 
 const router = Router();
 
-// Outcome metrics span every leader and stream — pastor oversight only.
-router.use(authenticate, requireRole('pastor', 'superadmin'));
+// Outcome metrics aggregate pastoral data across every leader — pastor only.
+router.use(authenticate, requireRole('pastor'));
 
 router.get(
   '/',

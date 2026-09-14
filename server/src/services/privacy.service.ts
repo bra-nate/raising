@@ -385,11 +385,72 @@ async function setLegalBasis(
   return updated;
 }
 
+function csvCell(value: unknown): string {
+  if (value === null || value === undefined) return '""';
+  const v = value instanceof Date ? value.toISOString() : String(value);
+  return `"${v.replace(/"/g, '""')}"`;
+}
+
+/**
+ * The same export as JSON, flattened into one sheet. A subject access request
+ * is usually answered to a person, not to a system, and a spreadsheet is what
+ * they can actually read.
+ */
+async function exportPersonCsv(user: JwtPayload, type: 'member' | 'first_timer', id: string): Promise<string> {
+  const data = await exportPerson(user, type, id);
+  const lines: string[] = [['Section', 'Field', 'Value'].map(csvCell).join(',')];
+  const push = (section: string, field: string, value: unknown) =>
+    lines.push([section, field, value].map(csvCell).join(','));
+
+  for (const [field, value] of Object.entries(data.subject)) push('Details', field, value);
+
+  // Each group is empty for the type it does not apply to, so there is no
+  // branching to get wrong.
+  const reports = 'reports' in data ? (data.reports ?? []) : [];
+  const cases = 'cases' in data ? (data.cases ?? []) : [];
+  const priorCalls = 'callsBeforeJoining' in data ? (data.callsBeforeJoining ?? []) : [];
+  const calls = 'calls' in data ? (data.calls ?? []) : [];
+
+  reports.forEach((r, i) => {
+    push(`Report ${i + 1}`, 'date', r.date);
+    push(`Report ${i + 1}`, 'by', r.by);
+    push(`Report ${i + 1}`, 'status', r.statusTag);
+    push(`Report ${i + 1}`, 'content', r.content);
+    push(`Report ${i + 1}`, 'confidential', r.isConfidential ? 'yes' : 'no');
+    push(`Report ${i + 1}`, 'safety flagged', r.isSafetyFlagged ? 'yes' : 'no');
+  });
+
+  cases.forEach((c, i) => {
+    push(`Case ${i + 1}`, 'kind', c.kind);
+    push(`Case ${i + 1}`, 'status', c.status);
+    push(`Case ${i + 1}`, 'opened', c.openedOn);
+    push(`Case ${i + 1}`, 'resolved', c.resolvedOn);
+    push(`Case ${i + 1}`, 'resolution', c.resolutionNote);
+  });
+
+  priorCalls.forEach((c, i) => {
+    push(`Call before joining ${i + 1}`, 'date', c.date);
+    push(`Call before joining ${i + 1}`, 'outcome', c.outcome);
+    push(`Call before joining ${i + 1}`, 'content', c.content);
+  });
+
+  calls.forEach((c, i) => {
+    push(`Call ${i + 1}`, 'date', c.date);
+    push(`Call ${i + 1}`, 'by', c.by);
+    push(`Call ${i + 1}`, 'outcome', c.outcome);
+    push(`Call ${i + 1}`, 'content', c.content);
+  });
+
+  push('Export', 'generated', data.exportedAt);
+  return lines.join('\r\n');
+}
+
 export const privacyService = {
   listRetentionCandidates,
   redactForRetention,
   notifyRetentionDue,
   exportPerson,
+  exportPersonCsv,
   confidentialAccessReview,
   setLegalBasis,
 };

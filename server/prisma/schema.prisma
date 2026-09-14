@@ -254,6 +254,9 @@ model FirstTimerReport {
   reportedById String
   callOutcome  CallOutcome
   content      String?
+  // Set when the outcome is callback_requested — a callback without a date is
+  // not scheduled, it is just outstanding.
+  callbackAt   DateTime?
   createdAt    DateTime    @default(now())
 
   // Relations

@@ -7,7 +7,15 @@ import { settingsService } from './settings.service';
 import { notificationsService } from './notifications.service';
 
 const CASE_INCLUDE = {
-  member: { select: { id: true, firstName: true, lastName: true, assignedLeaderId: true } },
+  member: {
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      assignedLeaderId: true,
+      assignedLeader: { select: { id: true, fullName: true, role: true, isActive: true } },
+    },
+  },
   owner: { select: { fullName: true } },
   acknowledgedBy: { select: { fullName: true } },
   resolvedBy: { select: { fullName: true } },
@@ -94,12 +102,34 @@ async function listCases(user: JwtPayload, opts: { status?: string; kind?: strin
     where.member = { assignedLeaderId: user.id };
   }
 
-  const data = await prisma.case.findMany({
+  const rows = await prisma.case.findMany({
     where,
     include: CASE_INCLUDE,
     // Safety first, then oldest — the queue reads top-down.
     orderBy: [{ kind: 'desc' }, { createdAt: 'asc' }],
   });
+
+  // The eligible owners travel with each case so the UI never has to guess —
+  // and never offers a choice the service would reject.
+  const pastors = await prisma.user.findMany({
+    where: { role: 'pastor', isActive: true },
+    select: { id: true, fullName: true },
+    orderBy: { fullName: 'asc' },
+  });
+
+  const data = rows.map((c) => ({
+    ...c,
+    assignableOwners:
+      c.kind === 'safety'
+        ? pastors
+        : [
+            ...pastors,
+            ...(c.member.assignedLeader?.isActive
+              ? [{ id: c.member.assignedLeader.id, fullName: c.member.assignedLeader.fullName }]
+              : []),
+          ],
+  }));
+
   return { data, total: data.length };
 }
 
@@ -122,7 +152,7 @@ async function getCase(user: JwtPayload, id: string) {
  * one raised on their own member.
  */
 function assertMayAct(user: JwtPayload, kind: CaseKind) {
-  if (kind === 'safety' && user.role !== 'pastor' && user.role !== 'superadmin') {
+  if (kind === 'safety' && user.role !== 'pastor') {
     throw new AppError(403, 'Only a pastor can act on a safety case');
   }
 }
@@ -152,13 +182,38 @@ async function acknowledgeCase(user: JwtPayload, id: string) {
   return updated;
 }
 
+/**
+ * Who may carry a pastoral case. Anyone else — follow-up staff, a platform
+ * admin, an unrelated leader — would learn the member's name and the case kind
+ * from the assignment notification alone, so the allowlist is the disclosure
+ * boundary, not just a permission.
+ *
+ * Safety cases are narrower still: safeguarding stays with the pastor.
+ */
+async function assertMayOwn(owner: { id: string; role: string; isActive: boolean }, existing: { kind: CaseKind; member: { assignedLeaderId: string } }) {
+  if (!owner.isActive) throw new AppError(400, 'Owner must be an active user');
+
+  if (existing.kind === 'safety') {
+    if (owner.role !== 'pastor') {
+      throw new AppError(400, 'A safety case may only be owned by a pastor');
+    }
+    return;
+  }
+
+  const mayOwn = owner.role === 'pastor' || (owner.role === 'leader' && owner.id === existing.member.assignedLeaderId);
+  if (!mayOwn) {
+    throw new AppError(400, 'A case may only be owned by a pastor or the member’s assigned leader');
+  }
+}
+
 async function assignCase(user: JwtPayload, id: string, ownerId: string) {
   const existing = await loadForUser(user, id);
   assertMayAct(user, existing.kind);
   if (existing.status === 'resolved') throw new AppError(400, 'Case is already resolved');
 
   const owner = await prisma.user.findUnique({ where: { id: ownerId } });
-  if (!owner || !owner.isActive) throw new AppError(400, 'Owner must be an active user');
+  if (!owner) throw new AppError(400, 'Owner must be an active user');
+  await assertMayOwn(owner, existing);
 
   const updated = await prisma.$transaction(async (tx) => {
     const row = await tx.case.update({ where: { id }, data: { ownerId }, include: CASE_INCLUDE });

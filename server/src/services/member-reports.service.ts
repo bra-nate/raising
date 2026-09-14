@@ -211,6 +211,19 @@ async function deleteReport(user: JwtPayload, id: string) {
       tx,
     });
     await tx.memberReport.delete({ where: { id } });
+
+    // lastReportDate is a cache of the newest report. Deleting the newest one
+    // would otherwise leave the member looking recently covered by a report
+    // that no longer exists — and that feeds silence, reminders and metrics.
+    const newest = await tx.memberReport.findFirst({
+      where: { memberId: report.memberId },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true },
+    });
+    await tx.member.update({
+      where: { id: report.memberId },
+      data: { lastReportDate: newest?.createdAt ?? null },
+    });
   });
 
   return { id };

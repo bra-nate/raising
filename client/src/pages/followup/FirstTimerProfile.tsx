@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Button, Card, Field, Modal, Select } from '../../components/ui';
+import { Badge, Button, Card, Field, Input, Modal, Select } from '../../components/ui';
 import { IconPhone } from '../../components/ui/icons';
 import { createFirstTimerReport, getFirstTimer, listFirstTimerReports } from '../../lib/api';
 import { callOutcomeLabels, ftStatusMeta } from '../../lib/firstTimers';
@@ -116,6 +116,7 @@ function LogCallModal({
   onSaved: () => Promise<void>;
 }) {
   const [callOutcome, setCallOutcome] = useState<CallOutcome>('answered');
+  const [callbackAt, setCallbackAt] = useState('');
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -125,9 +126,15 @@ function LogCallModal({
     setSaving(true);
     setError('');
     try {
-      await createFirstTimerReport({ firstTimerId, callOutcome, content: content.trim() || undefined });
+      await createFirstTimerReport({
+        firstTimerId,
+        callOutcome,
+        content: content.trim() || undefined,
+        callbackAt: callOutcome === 'callback_requested' && callbackAt ? callbackAt : undefined,
+      });
       await onSaved();
       setContent('');
+      setCallbackAt('');
       setCallOutcome('answered');
       onClose();
     } catch (err) {
@@ -149,6 +156,11 @@ function LogCallModal({
             ))}
           </Select>
         </Field>
+        {callOutcome === 'callback_requested' && (
+          <Field label="Call back on" hint="Without a date the callback shows as due straight away.">
+            <Input type="date" value={callbackAt} onChange={(e) => setCallbackAt(e.target.value)} />
+          </Field>
+        )}
         <Field label="Notes" hint="Optional">
           <textarea
             value={content}

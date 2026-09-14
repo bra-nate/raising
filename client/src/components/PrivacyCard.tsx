@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { Button, Card, Field, Input } from './ui';
-import { exportPersonData, setLegalBasis } from '../lib/api';
+import { exportPersonCsv, exportPersonData, setLegalBasis } from '../lib/api';
 
 interface PrivacyCardProps {
   type: 'member' | 'first_timer';
@@ -39,17 +39,25 @@ export function PrivacyCard({ type, id, name, legalBasis, consentNote, onSaved }
     }
   }
 
-  async function handleExport() {
+  function download(blob: Blob, extension: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name.replace(/\s+/g, '-').toLowerCase()}-data.${extension}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleExport(format: 'json' | 'csv') {
     setExporting(true);
+    setMessage('');
     try {
-      const data = await exportPersonData(type, id);
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${name.replace(/\s+/g, '-').toLowerCase()}-data.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      if (format === 'csv') {
+        download(await exportPersonCsv(type, id), 'csv');
+      } else {
+        const data = await exportPersonData(type, id);
+        download(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), 'json');
+      }
     } catch {
       setMessage('Could not export this record.');
     } finally {
@@ -72,14 +80,25 @@ export function PrivacyCard({ type, id, name, legalBasis, consentNote, onSaved }
           <Button type="submit" variant="secondary" disabled={!dirty || saving}>
             {saving ? 'Saving…' : 'Save'}
           </Button>
-          <button
-            type="button"
-            onClick={handleExport}
-            disabled={exporting}
-            className="text-caption font-medium text-accent transition hover:underline disabled:opacity-50"
-          >
-            {exporting ? 'Exporting…' : 'Export everything held'}
-          </button>
+          <span className="text-caption text-faint">
+            Export everything held:
+            <button
+              type="button"
+              onClick={() => handleExport('csv')}
+              disabled={exporting}
+              className="ml-2 font-medium text-accent transition hover:underline disabled:opacity-50"
+            >
+              CSV
+            </button>
+            <button
+              type="button"
+              onClick={() => handleExport('json')}
+              disabled={exporting}
+              className="ml-2 font-medium text-accent transition hover:underline disabled:opacity-50"
+            >
+              JSON
+            </button>
+          </span>
           {message && <span className="text-caption text-faint">{message}</span>}
         </div>
       </form>

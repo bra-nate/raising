@@ -6,8 +6,9 @@ import { asyncHandler } from '../lib/asyncHandler';
 
 const router = Router();
 
-// Cases belong to the member-care stream. The follow-up team has no part in it.
-router.use(authenticate, requireRole('pastor', 'superadmin', 'leader'));
+// Cases carry pastoral content. Per the superadmin design, a platform
+// administrator manages accounts, settings and audits — never pastoral data.
+router.use(authenticate, requireRole('pastor', 'leader'));
 
 router.get(
   '/',

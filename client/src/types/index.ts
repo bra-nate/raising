@@ -149,6 +149,8 @@ export interface CareCase {
   resolutionNote?: string | null;
   reportCount: number;
   createdAt: string;
+  /** Eligible owners, resolved server-side — a pastor, or the member's own leader. */
+  assignableOwners?: { id: string; fullName: string }[];
 }
 
 export interface FirstTimer {
@@ -185,6 +187,7 @@ export interface QueueEntry {
   assignedTo?: { id: string; fullName: string } | null;
   lastAttemptAt?: string | null;
   lastOutcome?: CallOutcome | null;
+  callbackAt?: string | null;
   attempts: number;
   dueAt: string;
   ageDays: number;
@@ -195,11 +198,19 @@ export interface FollowUpQueue {
   overdue: QueueEntry[];
   upcoming: QueueEntry[];
   callbacks: QueueEntry[];
+  callbacksScheduled: QueueEntry[];
   unassigned: QueueEntry[];
   aging: { d0_2: number; d3_7: number; d8_14: number; d15plus: number };
   workload: { userId: string; fullName: string; open: number; overdue: number }[];
   assignees: { id: string; fullName: string }[];
-  counts: { total: number; dueToday: number; overdue: number; callbacks: number; unassigned: number };
+  counts: {
+    total: number;
+    dueToday: number;
+    overdue: number;
+    callbacks: number;
+    callbacksScheduled: number;
+    unassigned: number;
+  };
 }
 
 export interface FirstTimerReport {

@@ -281,11 +281,14 @@ async function convertToMember(user: JwtPayload, id: string, input: ConvertInput
 
 const QUEUE_INCLUDE = {
   assignedTo: { select: { id: true, fullName: true } },
+  // Latest attempt for display, plus a true count — `reports.length` here would
+  // only ever be 0 or 1 because of the take.
   reports: {
     orderBy: { createdAt: 'desc' as const },
     take: 1,
-    select: { createdAt: true, callOutcome: true },
+    select: { createdAt: true, callOutcome: true, callbackAt: true },
   },
+  _count: { select: { reports: true } },
 } as const;
 
 type QueueRow = {
@@ -298,7 +301,8 @@ type QueueRow = {
   status: string;
   assignedToId: string | null;
   assignedTo: { id: string; fullName: string } | null;
-  reports: { createdAt: Date; callOutcome: string }[];
+  reports: { createdAt: Date; callOutcome: string; callbackAt: Date | null }[];
+  _count: { reports: number };
 };
 
 function startOfDay(d: Date): number {
@@ -345,7 +349,8 @@ async function getQueue(user: JwtPayload, now = new Date()) {
       assignedTo: r.assignedTo,
       lastAttemptAt: last?.createdAt ?? null,
       lastOutcome: last?.callOutcome ?? null,
-      attempts: r.reports.length,
+      callbackAt: last?.callOutcome === 'callback_requested' ? (last.callbackAt ?? null) : null,
+      attempts: r._count.reports,
       dueAt,
       ageDays: Math.floor((today - startOfDay(r.visitDate)) / 86_400_000),
     };
@@ -358,7 +363,14 @@ async function getQueue(user: JwtPayload, now = new Date()) {
   const overdue = uncontacted.filter((r) => startOfDay(r.dueAt) < today);
   const dueToday = uncontacted.filter((r) => startOfDay(r.dueAt) === today);
   const upcoming = uncontacted.filter((r) => startOfDay(r.dueAt) > today);
-  const callbacks = all.filter((r) => r.lastOutcome === 'callback_requested');
+  // A callback with a future date is scheduled work, not outstanding work. One
+  // with no date was logged before dates existed (or left blank) — treat it as
+  // due now rather than hiding it.
+  const allCallbacks = all.filter((r) => r.lastOutcome === 'callback_requested');
+  const callbacks = allCallbacks.filter((r) => r.callbackAt === null || startOfDay(r.callbackAt) <= today);
+  const callbacksScheduled = allCallbacks
+    .filter((r) => r.callbackAt !== null && startOfDay(r.callbackAt) > today)
+    .sort((a, b) => a.callbackAt!.getTime() - b.callbackAt!.getTime());
   const unassigned = all.filter((r) => r.assignedToId === null);
 
   // Aging buckets measure how long a visitor has gone uncontacted — the number
@@ -405,6 +417,7 @@ async function getQueue(user: JwtPayload, now = new Date()) {
     overdue,
     upcoming,
     callbacks,
+    callbacksScheduled,
     unassigned,
     aging,
     workload,
@@ -414,6 +427,7 @@ async function getQueue(user: JwtPayload, now = new Date()) {
       dueToday: dueToday.length,
       overdue: overdue.length,
       callbacks: callbacks.length,
+      callbacksScheduled: callbacksScheduled.length,
       unassigned: unassigned.length,
     },
   };

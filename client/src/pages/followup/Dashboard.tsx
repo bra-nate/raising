@@ -64,7 +64,7 @@ export default function FollowUpDashboard() {
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <Stat label="Due today" value={queue.counts.dueToday} tone="attention" />
             <Stat label="Overdue" value={queue.counts.overdue} tone="concern" />
-            <Stat label="Callbacks" value={queue.counts.callbacks} />
+            <Stat label="Callbacks due" value={queue.counts.callbacks} tone="attention" />
             <Stat label="Unassigned" value={queue.counts.unassigned} />
           </div>
 
@@ -84,9 +84,17 @@ export default function FollowUpDashboard() {
               onAssign={handleAssign}
             />
             <QueueList
-              title="Callbacks requested"
+              title="Callbacks due"
               entries={queue.callbacks}
               empty="No callbacks outstanding."
+              assignees={isLead ? queue.assignees : undefined}
+              onAssign={handleAssign}
+            />
+
+            <QueueList
+              title="Callbacks scheduled"
+              entries={queue.callbacksScheduled}
+              empty="Nothing booked ahead."
               assignees={isLead ? queue.assignees : undefined}
               onAssign={handleAssign}
             />
@@ -191,10 +199,11 @@ function QueueList({
                 Visited {relativeDate(e.visitDate)}
                 {e.serviceName && ` · ${e.serviceName}`}
                 {e.lastAttemptAt
-                  ? ` · last call ${relativeDate(e.lastAttemptAt)}${
+                  ? ` · ${e.attempts} attempt${e.attempts === 1 ? '' : 's'}, last ${relativeDate(e.lastAttemptAt)}${
                       e.lastOutcome ? ` (${outcomeLabels[e.lastOutcome] ?? e.lastOutcome})` : ''
                     }`
                   : ' · never called'}
+                {e.callbackAt && ` · call back ${relativeDate(e.callbackAt)}`}
               </p>
 
               <p className="mt-1 text-caption text-faint">
