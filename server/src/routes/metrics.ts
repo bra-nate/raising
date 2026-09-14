@@ -6,8 +6,10 @@ import { asyncHandler } from '../lib/asyncHandler';
 
 const router = Router();
 
-// Outcome metrics aggregate pastoral data across every leader — pastor only.
-router.use(authenticate, requireRole('pastor'));
+// Aggregates only: rates, medians, leader and group names. No member names and
+// no report content, so a superadmin may read them. Anything that exposes what
+// a leader actually wrote stays pastor-only.
+router.use(authenticate, requireRole('pastor', 'superadmin'));
 
 router.get(
   '/',

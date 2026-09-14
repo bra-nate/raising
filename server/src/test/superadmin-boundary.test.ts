@@ -1,9 +1,12 @@
 /**
- * Separation of duties: a superadmin administers the platform — accounts,
- * settings, audit — and must never reach pastoral data.
+ * Separation of duties. A superadmin administers the platform — accounts,
+ * settings, audit — and may read structure and aggregate numbers so they can
+ * support it. What stays shut is pastoral *content*: what a leader wrote about
+ * a member, case detail, and subject-access exports.
+ *
  * See docs/superpowers/specs/2026-07-03-superadmin-and-audit-logging-design.md
  *
- * These are the routes that regressed once already, by being written with
+ * These routes regressed once already, by being written with
  * `requireRole('pastor', 'superadmin')` out of habit.
  */
 import { describe, it, expect } from 'vitest';
@@ -28,7 +31,7 @@ async function scenario() {
   return { superadmin, leader, member };
 }
 
-describe('a superadmin cannot reach pastoral data', () => {
+describe('a superadmin cannot reach pastoral content', () => {
   it('403s on cases', async () => {
     const { superadmin } = await scenario();
     await request(app).get('/api/v1/cases').set('Authorization', auth(superadmin)).expect(403);
@@ -47,14 +50,8 @@ describe('a superadmin cannot reach pastoral data', () => {
     await request(app).get('/api/v1/privacy/retention').set('Authorization', auth(superadmin)).expect(403);
   });
 
-  it('403s on congregation-wide metrics', async () => {
-    const { superadmin } = await scenario();
-    await request(app).get('/api/v1/metrics').set('Authorization', auth(superadmin)).expect(403);
-  });
-
-  it('403s on groups, read and write', async () => {
+  it('403s on restructuring groups — reading is support, writing is pastoral', async () => {
     const { superadmin, leader } = await scenario();
-    await request(app).get('/api/v1/groups').set('Authorization', auth(superadmin)).expect(403);
     await request(app)
       .post('/api/v1/groups')
       .set('Authorization', auth(superadmin))
@@ -69,6 +66,27 @@ describe('a superadmin cannot reach pastoral data', () => {
       .get(`/api/v1/member-reports?memberId=${member.id}`)
       .set('Authorization', auth(superadmin))
       .expect(403);
+  });
+});
+
+describe('a superadmin reads structure and numbers, so they can support the platform', () => {
+  it('reads group structure — names, leaders and counts, no member names', async () => {
+    const { superadmin, leader } = await scenario();
+    await prisma.group.create({ data: { name: 'Zone A', leaderId: leader.id } });
+
+    const res = await request(app).get('/api/v1/groups').set('Authorization', auth(superadmin)).expect(200);
+    expect(res.body.data[0].name).toBe('Zone A');
+    expect(JSON.stringify(res.body)).not.toContain('Mem');
+  });
+
+  it('reads aggregate metrics without any report content', async () => {
+    const { superadmin, leader, member } = await scenario();
+    await prisma.memberReport.create({
+      data: { memberId: member.id, leaderId: leader.id, statusTag: 'concern', content: 'a private matter' },
+    });
+
+    const res = await request(app).get('/api/v1/metrics').set('Authorization', auth(superadmin)).expect(200);
+    expect(JSON.stringify(res.body)).not.toContain('a private matter');
   });
 });
 
@@ -174,5 +192,73 @@ describe('case ownership is an allowlist, because assignment discloses', () => {
     const res = await request(app).get('/api/v1/cases').set('Authorization', auth(pastor)).expect(200);
     const row = res.body.data.find((x: { id: string }) => x.id === c.id);
     expect(row.assignableOwners.map((o: { id: string }) => o.id).sort()).toEqual([pastor.id, leader.id].sort());
+  });
+});
+
+
+describe('a role change is permitted but never quiet', () => {
+  it('tells every pastor when a superadmin promotes itself', async () => {
+    await seedSettings();
+    const pastor = await createUser({ role: 'pastor' });
+    const superadmin = await createUser({ role: 'superadmin' });
+
+    await request(app)
+      .patch(`/api/v1/users/${superadmin.id}`)
+      .set('Authorization', auth(superadmin))
+      .send({ role: 'pastor' })
+      .expect(200);
+
+    const notice = await prisma.notification.findFirst({
+      where: { userId: pastor.id, type: 'role_changed' },
+    });
+    expect(notice?.title).toBe('A user changed their own role');
+    expect(notice?.message).toContain('from superadmin to pastor');
+  });
+
+  it('tells pastors when a superadmin changes somebody else', async () => {
+    await seedSettings();
+    const pastor = await createUser({ role: 'pastor' });
+    const superadmin = await createUser({ role: 'superadmin' });
+    const leader = await createUser({ role: 'leader' });
+
+    await request(app)
+      .patch(`/api/v1/users/${leader.id}`)
+      .set('Authorization', auth(superadmin))
+      .send({ role: 'followup_team_member' })
+      .expect(200);
+
+    const notice = await prisma.notification.findFirst({
+      where: { userId: pastor.id, type: 'role_changed' },
+    });
+    expect(notice?.message).toContain('from leader to followup_team_member');
+  });
+
+  it('does not tell a pastor about their own action', async () => {
+    await seedSettings();
+    const pastor = await createUser({ role: 'pastor' });
+    const leader = await createUser({ role: 'leader' });
+
+    await request(app)
+      .patch(`/api/v1/users/${leader.id}`)
+      .set('Authorization', auth(pastor))
+      .send({ role: 'followup_team_lead' })
+      .expect(200);
+
+    expect(await prisma.notification.count({ where: { userId: pastor.id, type: 'role_changed' } })).toBe(0);
+  });
+
+  it('stays quiet when the role did not actually change', async () => {
+    await seedSettings();
+    const pastor = await createUser({ role: 'pastor' });
+    const superadmin = await createUser({ role: 'superadmin' });
+    const leader = await createUser({ role: 'leader' });
+
+    await request(app)
+      .patch(`/api/v1/users/${leader.id}`)
+      .set('Authorization', auth(superadmin))
+      .send({ role: 'leader', fullName: 'Renamed Leader' })
+      .expect(200);
+
+    expect(await prisma.notification.count({ where: { userId: pastor.id, type: 'role_changed' } })).toBe(0);
   });
 });

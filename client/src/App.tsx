@@ -175,6 +175,22 @@ export default function App() {
               }
             />
             <Route
+              path="/admin/groups"
+              element={
+                <RequireRole roles={['superadmin']}>
+                  <PastorGroups />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/admin/insights"
+              element={
+                <RequireRole roles={['superadmin']}>
+                  <PastorInsights />
+                </RequireRole>
+              }
+            />
+            <Route
               path="/admin/logs"
               element={
                 <RequireRole roles={['superadmin']}>

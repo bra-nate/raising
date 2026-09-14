@@ -103,6 +103,7 @@ enum NotificationType {
   case_assigned
   case_escalated
   retention_due
+  role_changed
 }
 
 enum DeletePermission {

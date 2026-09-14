@@ -22,6 +22,13 @@ export function navForRole(role: UserRole): NavGroup[] {
       return [
         { items: [{ label: 'Dashboard', to: '/admin', icon: IconGrid }] },
         {
+          heading: 'Platform',
+          items: [
+            { label: 'Groups', to: '/admin/groups', icon: IconUsers },
+            { label: 'Insights', to: '/admin/insights', icon: IconActivity },
+          ],
+        },
+        {
           heading: 'Admin',
           items: [
             { label: 'Users', to: '/admin/users', icon: IconUsers },

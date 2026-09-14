@@ -8,10 +8,12 @@ const router = Router();
 
 router.use(authenticate);
 
-// A leader may read their own groups; only the pastor restructures them.
+// Group structure carries no pastoral content — names, leaders and counts —
+// so a superadmin may read it to support the platform. Restructuring stays
+// with the pastor.
 router.get(
   '/',
-  requireRole('pastor', 'leader'),
+  requireRole('pastor', 'superadmin', 'leader'),
   asyncHandler(async (req, res) => {
     res.json(await groupsService.listGroups(req.user!));
   })

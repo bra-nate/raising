@@ -10,9 +10,13 @@ import {
   moveGroupMembers,
   updateGroup,
 } from '../../lib/api';
+import { useAuth } from '../../hooks/useAuth';
 import type { Group, User } from '../../types';
 
 export default function Groups() {
+  const { user } = useAuth();
+  // A superadmin may see the structure; only the pastor may change it.
+  const mayEdit = user?.role === 'pastor';
   const [groups, setGroups] = useState<Group[]>([]);
   const [leaders, setLeaders] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,12 +59,14 @@ export default function Groups() {
     <AppShell
       title="Groups"
       subtitle={loading ? undefined : `${groups.length} group${groups.length === 1 ? '' : 's'}`}
-      back={{ to: '/pastor', label: 'Dashboard' }}
+      back={{ to: mayEdit ? '/pastor' : '/admin', label: 'Dashboard' }}
       actions={
-        <Button variant="primary" onClick={() => setCreating(true)}>
-          <IconPlus className="h-4 w-4" />
-          New group
-        </Button>
+        mayEdit ? (
+          <Button variant="primary" onClick={() => setCreating(true)}>
+            <IconPlus className="h-4 w-4" />
+            New group
+          </Button>
+        ) : undefined
       }
     >
       {loading ? (
@@ -90,14 +96,16 @@ export default function Groups() {
                 <Row label="Open cases" value={g.openCaseCount} tone={g.openCaseCount > 0 ? 'concern' : undefined} />
               </dl>
 
-              <div className="mt-auto flex flex-wrap gap-3 pt-4">
+              <div className={`mt-auto flex flex-wrap gap-3 ${mayEdit ? 'pt-4' : ''}`}>
+                {!mayEdit ? null : (
                 <button
                   onClick={() => setEditing(g)}
                   className="text-caption font-medium text-accent transition hover:underline"
                 >
                   Edit
                 </button>
-                {g.memberCount > 0 ? (
+                )}
+                {!mayEdit ? null : g.memberCount > 0 ? (
                   <button
                     onClick={() => setMoving(g)}
                     className="text-caption font-medium text-muted transition hover:text-ink-2 hover:underline"

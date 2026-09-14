@@ -29,12 +29,45 @@ This design adds a platform-only `superadmin` role and closes all identified aud
 | Create / update / deactivate users (any role) | ✅ | ✅ |
 | Read / write settings | ✅ | ✅ |
 | View activity logs | ✅ | ✅ |
+| View group structure and aggregate metrics | ✅ | ✅ |
 | View members / reports / confidential pastoral data | ✅ | ❌ |
+| View case detail or subject-access exports | ✅ | ❌ |
 | Submit / redact / delete reports | ✅ | ❌ |
+| Create / edit / delete groups | ✅ | ❌ |
 
 - **Both** pastor and superadmin can manage users and settings.
 - A **pastor may create superadmin accounts** (confirmed — consistent with "both can manage"). Any manager can assign any role.
 - The superadmin's lack of pastoral access falls out **naturally** from `requireRole` being an explicit allowlist: `superadmin` is simply never added to pastoral routes, which return 403. **All existing confidentiality and safety-flag guarantees remain intact** — a superadmin cannot reach those endpoints.
+
+### Amendment — 2026-09-14: structure and numbers
+
+The original line was "no pastoral access at all". In practice a platform
+administrator cannot support the system blind — they cannot answer "why is this
+leader's reporting rate zero" or "why is this group empty" — and the cheapest
+way to get that visibility is to self-promote, which is worse than granting it.
+
+The boundary is therefore drawn at **pastoral content**, not at pastoral data:
+
+- **Open to superadmin (read):** group structure (names, leaders, member and
+  silence counts) and aggregate metrics (rates, medians, leader and group
+  names). Neither carries a member's name or a word a leader wrote.
+- **Closed:** members, member reports, cases, retention lists, and
+  subject-access exports. Exports are the sharpest of these — they return full
+  report content including confidential and safety-flagged reports.
+- **Closed (write):** creating, editing or deleting groups is restructuring the
+  congregation, which is pastoral.
+
+`src/test/superadmin-boundary.test.ts` pins both halves of this line.
+
+### Amendment — 2026-09-14: role changes are loud
+
+Nothing prevents a superadmin from setting their own role to `pastor` and
+reading everything; the platform-administration routes include user management
+by design. That is accepted rather than blocked — but it is no longer quiet.
+Every role change now notifies and emails every active pastor except the person
+who made it, with self-promotion called out explicitly in the message. The
+control is visibility, not prevention: a log entry nobody reads is not
+oversight.
 
 ### Changes
 

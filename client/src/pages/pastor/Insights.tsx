@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, Card } from '../../components/ui';
 import { exportMetricsCsv, getMetrics } from '../../lib/api';
+import { useAuth } from '../../hooks/useAuth';
 import type { Metrics } from '../../types';
 
 /** "2026-03" → "Mar". The year is implied by the run of months. */
@@ -11,6 +12,7 @@ function monthLabel(key: string): string {
 }
 
 export default function Insights() {
+  const { user } = useAuth();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -40,7 +42,7 @@ export default function Insights() {
     <AppShell
       title="Insights"
       subtitle="Whether the care is getting better, not how much of it happened."
-      back={{ to: '/pastor', label: 'Dashboard' }}
+      back={{ to: user?.role === 'superadmin' ? '/admin' : '/pastor', label: 'Dashboard' }}
       actions={
         <Button variant="secondary" onClick={handleExport} disabled={!metrics}>
           Export CSV

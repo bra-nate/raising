@@ -169,3 +169,22 @@ deployment list, which PHASE.md already tracks as open.
       recomputes it inside the same transaction.
 - [x] **Subject access export was JSON-only.** CSV added, matching the metrics
       export, because a subject access request is answered to a person.
+
+---
+
+## Superadmin boundary — decided 2026-09-14
+
+Reviewed after the separation-of-duties fix. Two decisions, both implemented:
+
+- [x] **Structure and numbers, not content.** A superadmin reads group structure
+      and aggregate metrics so they can support the platform; members, reports,
+      cases, retention and subject-access exports stay pastor-only, as does
+      restructuring groups. `/admin/groups` and `/admin/insights` render the two
+      open views read-only.
+- [x] **Role changes are loud, not blocked.** A superadmin can still promote
+      themselves — user management is theirs by design — but every role change
+      now notifies and emails every pastor except the actor, naming
+      self-promotion explicitly.
+
+Rejected: blocking self-promotion outright. The honest control here is
+visibility; a superadmin with database access defeats any in-app wall anyway.

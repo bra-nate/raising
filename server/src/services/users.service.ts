@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import { AppError } from '../lib/errors';
 import { assertValidPassword, hashPassword } from '../lib/password';
 import { writeLog } from './activity-log.service';
+import { notificationsService } from './notifications.service';
 
 const PUBLIC_FIELDS = {
   id: true,
@@ -95,6 +96,7 @@ async function updateUser(actorId: string, id: string, input: UpdateUserInput) {
       entityId: user.id,
       metadata: { field: 'role', from: target.role, to: data.role },
     });
+    await notifyRoleChange(actorId, { id: user.id, fullName: user.fullName }, target.role, data.role);
   }
 
   return user;
@@ -120,6 +122,46 @@ async function deactivateUser(actorId: string, id: string) {
   });
 
   return user;
+}
+
+/**
+ * Role changes reach every pastor who did not make them.
+ *
+ * The case this exists for is a superadmin granting themselves pastoral access:
+ * it is permitted, it is logged, and it must not be quiet. A log entry nobody
+ * reads is not oversight.
+ */
+async function notifyRoleChange(
+  actorId: string,
+  target: { id: string; fullName: string },
+  from: UserRole,
+  to: UserRole
+) {
+  const [actor, pastors] = await Promise.all([
+    prisma.user.findUnique({ where: { id: actorId }, select: { fullName: true } }),
+    prisma.user.findMany({ where: { role: 'pastor', isActive: true } }),
+  ]);
+
+  const selfPromotion = actorId === target.id;
+  const actorName = actor?.fullName ?? 'Someone';
+  const title = selfPromotion ? 'A user changed their own role' : 'A user role changed';
+  const message = selfPromotion
+    ? `${actorName} changed their own role from ${from} to ${to}.`
+    : `${actorName} changed ${target.fullName} from ${from} to ${to}.`;
+
+  for (const pastor of pastors) {
+    // Don't tell a pastor about their own action.
+    if (pastor.id === actorId) continue;
+    await notificationsService.createNotification({
+      userId: pastor.id,
+      type: 'role_changed',
+      title,
+      message,
+      entityType: 'user',
+      entityId: target.id,
+    });
+    await notificationsService.sendEmail(pastor.email, title, `<p>${message}</p>`);
+  }
 }
 
 // Pastor-issued reset: no current password, so the actor is always recorded.
