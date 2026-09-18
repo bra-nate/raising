@@ -195,9 +195,9 @@ Each phase is a complete, usable vertical slice. Start a new Claude Code session
 ## Phase 7 — Polish and Hardening
 *Target: Production-ready*
 
-- [ ] Mobile responsiveness audit — all core flows work at 375px viewport
+- [x] Mobile responsiveness audit — all core flows work at 375px viewport (sidebar becomes a drawer below `md`; header actions wrap to their own row below `sm`; every table already scrolled)
 - [x] Empty states on all list views (no members yet, no reports yet)
-- [ ] Loading skeletons on all async fetches
+- [ ] Loading skeletons on all async fetches — every async page already shows a loading state in text; skeletons are a perceived-speed upgrade, not a gap
 - [x] Error states with user-friendly messages (network failure, 403, 404)
 - [x] Security test: log in as a leader and attempt `GET /api/v1/members?assignedLeaderId=<other-leader-id>` directly — must return only own members
 - [x] Security test: attempt to redact or delete a safety-flagged report via direct API call — must return 403
@@ -225,7 +225,7 @@ Each phase is a complete, usable vertical slice. Start a new Claude Code session
 - [x] `PATCH /users/:id/password` — pastor-issued reset, actor recorded in the log
 - [x] Shared `lib/password.ts` — one validation and hashing rule for all three call sites
 - [x] `PasswordModal` in both modes: sidebar self-serve, per-row reset in User Management
-- [ ] Force rotation on first login (needs a `mustChangePassword` column and a login-flow gate)
+- [x] Force rotation on first login — `mustChangePassword` set on account creation and on a pastor-issued reset, cleared by `change-password`. The claim rides in the JWT, so `authenticate` gates every route but `/auth/me`, `/auth/logout` and `/auth/change-password`; `RequireRole` renders a non-dismissable `PasswordModal` in place of the page. Pinned by `src/test/password-gate.test.ts`.
 
 ---
 

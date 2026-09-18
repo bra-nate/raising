@@ -48,7 +48,13 @@ async function createUser(actorId: string, input: CreateUserInput) {
   const hash = await hashPassword(password);
 
   const user = await prisma.user.create({
-    data: { fullName: fullName.trim(), email: email.toLowerCase(), password: hash, role },
+    data: {
+      fullName: fullName.trim(),
+      email: email.toLowerCase(),
+      password: hash,
+      role,
+      mustChangePassword: true,
+    },
     select: PUBLIC_FIELDS,
   });
 
@@ -173,7 +179,7 @@ async function resetPassword(actorId: string, id: string, newPassword: string) {
 
   await prisma.user.update({
     where: { id },
-    data: { password: await hashPassword(newPassword) },
+    data: { password: await hashPassword(newPassword), mustChangePassword: true },
   });
 
   await writeLog({

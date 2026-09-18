@@ -5,6 +5,8 @@ import { config } from '../config';
 export interface JwtPayload {
   id: string;
   role: UserRole;
+  /** True while the holder is on a pastor-issued password and must replace it. */
+  mustChangePassword?: boolean;
 }
 
 export function signToken(payload: JwtPayload): string {
@@ -15,5 +17,5 @@ export function signToken(payload: JwtPayload): string {
 
 export function verifyToken(token: string): JwtPayload {
   const decoded = jwt.verify(token, config.jwtSecret) as jwt.JwtPayload;
-  return { id: decoded.id, role: decoded.role };
+  return { id: decoded.id, role: decoded.role, mustChangePassword: !!decoded.mustChangePassword };
 }

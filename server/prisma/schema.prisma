@@ -132,6 +132,9 @@ model User {
   password  String // bcrypt hash
   role      UserRole
   isActive  Boolean  @default(true)
+  // Set when the pastor creates an account or resets a password — the next
+  // login is gated until the holder picks their own.
+  mustChangePassword Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

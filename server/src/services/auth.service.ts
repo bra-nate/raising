@@ -10,6 +10,7 @@ export interface AuthUser {
   fullName: string;
   email: string;
   role: string;
+  mustChangePassword: boolean;
 }
 
 export interface LoginResult {
@@ -33,7 +34,11 @@ async function login(email: string, password: string): Promise<LoginResult> {
   const match = await bcrypt.compare(password, user.password);
   if (!match) throw genericFailure;
 
-  const token = signToken({ id: user.id, role: user.role });
+  const token = signToken({
+    id: user.id,
+    role: user.role,
+    mustChangePassword: user.mustChangePassword,
+  });
   await writeLog({
     userId: user.id,
     action: 'logged_in',
@@ -42,14 +47,26 @@ async function login(email: string, password: string): Promise<LoginResult> {
   });
   return {
     token,
-    user: { id: user.id, fullName: user.fullName, email: user.email, role: user.role },
+    user: {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      mustChangePassword: user.mustChangePassword,
+    },
   };
 }
 
 async function getProfile(userId: string): Promise<AuthUser> {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user || !user.isActive) throw new AppError(401, 'Unauthorized');
-  return { id: user.id, fullName: user.fullName, email: user.email, role: user.role };
+  return {
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    role: user.role,
+    mustChangePassword: user.mustChangePassword,
+  };
 }
 
 async function changePassword(userId: string, currentPassword: string, newPassword: string) {
@@ -66,7 +83,7 @@ async function changePassword(userId: string, currentPassword: string, newPasswo
 
   await prisma.user.update({
     where: { id: userId },
-    data: { password: await hashPassword(newPassword) },
+    data: { password: await hashPassword(newPassword), mustChangePassword: false },
   });
 
   await writeLog({
@@ -75,6 +92,9 @@ async function changePassword(userId: string, currentPassword: string, newPasswo
     entityType: 'user',
     entityId: userId,
   });
+
+  // The old token still carries the gate claim — hand back a clean one.
+  return { token: signToken({ id: user.id, role: user.role, mustChangePassword: false }) };
 }
 
 export const authService = { login, getProfile, changePassword };

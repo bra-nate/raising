@@ -69,8 +69,13 @@ export async function getMe(): Promise<AuthUser> {
   return data;
 }
 
-export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
-  await api.post('/auth/change-password', { currentPassword, newPassword });
+// Returns a fresh token: the old one carries the password-gate claim.
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<{ token?: string }> {
+  const { data } = await api.post('/auth/change-password', { currentPassword, newPassword });
+  return data;
 }
 
 // ── Privacy ───────────────────────────────────

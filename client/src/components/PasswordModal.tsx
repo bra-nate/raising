@@ -1,16 +1,18 @@
 import { FormEvent, useState } from 'react';
 import { Button, Field, Input, Modal } from './ui';
-import { changePassword, resetUserPassword } from '../lib/api';
+import { changePassword, resetUserPassword, tokenStore } from '../lib/api';
 
 interface PasswordModalProps {
   open: boolean;
   onClose: () => void;
   /** Present = pastor resetting someone else. Absent = signed-in user changing their own. */
   target?: { id: string; fullName: string };
+  /** First login on a pastor-issued password: no way out but through. */
+  forced?: boolean;
   onDone?: () => void;
 }
 
-export function PasswordModal({ open, onClose, target, onDone }: PasswordModalProps) {
+export function PasswordModal({ open, onClose, target, forced, onDone }: PasswordModalProps) {
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -19,6 +21,7 @@ export function PasswordModal({ open, onClose, target, onDone }: PasswordModalPr
   const [submitting, setSubmitting] = useState(false);
 
   function close() {
+    if (forced) return;
     setCurrent('');
     setNext('');
     setConfirm('');
@@ -36,8 +39,13 @@ export function PasswordModal({ open, onClose, target, onDone }: PasswordModalPr
     }
     setSubmitting(true);
     try {
-      if (target) await resetUserPassword(target.id, next);
-      else await changePassword(current, next);
+      if (target) {
+        await resetUserPassword(target.id, next);
+      } else {
+        // The returned token drops the password-gate claim the old one carries.
+        const { token } = await changePassword(current, next);
+        if (token) tokenStore.set(token);
+      }
       setDone(true);
       onDone?.();
     } catch (err) {
@@ -75,11 +83,13 @@ export function PasswordModal({ open, onClose, target, onDone }: PasswordModalPr
     <Modal
       open={open}
       onClose={close}
-      title={target ? `Reset password — ${target.fullName}` : 'Change password'}
+      title={target ? `Reset password — ${target.fullName}` : forced ? 'Choose your password' : 'Change password'}
       description={
         target
           ? 'Sets a new temporary password. This action is recorded in the activity log.'
-          : undefined
+          : forced
+            ? 'This account is on a password someone else set. Choose your own to continue.'
+            : undefined
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -116,9 +126,11 @@ export function PasswordModal({ open, onClose, target, onDone }: PasswordModalPr
         </Field>
         {error && <p className="text-body text-concern">{error}</p>}
         <div className="flex justify-end gap-2 pt-1">
-          <Button type="button" variant="secondary" onClick={close}>
-            Cancel
-          </Button>
+          {!forced && (
+            <Button type="button" variant="secondary" onClick={close}>
+              Cancel
+            </Button>
+          )}
           <Button type="submit" variant="primary" disabled={submitting}>
             {submitting ? 'Saving…' : target ? 'Reset password' : 'Change password'}
           </Button>

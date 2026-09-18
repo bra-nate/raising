@@ -8,6 +8,8 @@ interface AuthContextValue {
   loading: boolean;
   login: (email: string, password: string) => Promise<AuthUser>;
   logout: () => void;
+  /** Re-reads the profile — used after a forced password change clears the gate. */
+  refresh: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -36,14 +38,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return authUser;
   }, []);
 
+  const refresh = useCallback(async () => {
+    setUser(await getMe());
+  }, []);
+
   const logout = useCallback(() => {
     tokenStore.clear();
     setUser(null);
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, isAuthenticated: !!user, loading, login, logout }),
-    [user, loading, login, logout]
+    () => ({ user, isAuthenticated: !!user, loading, login, logout, refresh }),
+    [user, loading, login, logout, refresh]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

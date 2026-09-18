@@ -6,6 +6,7 @@ import { roleLabels } from '../../lib/roles';
 import { ThemeToggle } from '../ThemeToggle';
 import { IconLock, IconLogout } from '../ui/icons';
 import { PasswordModal } from '../PasswordModal';
+import { BrandLogo } from '../BrandLogo';
 
 function initials(name: string) {
   return name
@@ -17,20 +18,22 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-export function Sidebar() {
+/** `open` only applies below md — from md up the rail is always in the layout. */
+export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNavigate?: () => void }) {
   const { user, logout } = useAuth();
   const [pwOpen, setPwOpen] = useState(false);
   if (!user) return null;
   const groups = navForRole(user.role);
 
   return (
-    <aside className="flex h-full w-60 shrink-0 flex-col border-r border-hairline bg-canvas">
+    <aside
+      className={`fixed inset-y-0 left-0 z-40 flex h-full w-60 shrink-0 flex-col border-r border-hairline bg-canvas transition-transform md:static md:translate-x-0 ${
+        open ? 'translate-x-0' : '-translate-x-full'
+      }`}
+    >
       {/* Brand */}
-      <div className="flex h-14 items-center gap-2 px-5">
-        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-signal text-[13px] font-semibold text-white">
-          r
-        </span>
-        <span className="text-heading-sm font-semibold lowercase tracking-tight text-ink-2">raising</span>
+      <div className="flex h-14 items-center px-5">
+        <BrandLogo className="h-7 w-auto" />
       </div>
 
       {/* Nav */}
@@ -68,6 +71,7 @@ export function Sidebar() {
                     <NavLink
                       to={item.to}
                       end
+                      onClick={onNavigate}
                       className={({ isActive }) =>
                         `flex items-center gap-2.5 rounded-pill px-3 py-1.5 text-body transition ${
                           isActive

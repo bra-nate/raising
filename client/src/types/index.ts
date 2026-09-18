@@ -18,6 +18,8 @@ export interface AuthUser {
   fullName: string;
   email: string;
   role: UserRole;
+  /** On a pastor-issued password — every route is gated until it is replaced. */
+  mustChangePassword: boolean;
 }
 
 export interface User {
