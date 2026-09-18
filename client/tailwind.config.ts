@@ -66,11 +66,14 @@ export default {
           from: { opacity: '0', transform: 'translateY(8px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
+        'slidefill': { from: { width: '0%' }, to: { width: '100%' } },
       },
       animation: {
         'fade-in': 'fade-in 0.2s ease-out',
         'scale-in': 'scale-in 0.22s cubic-bezier(0.22, 1, 0.36, 1)',
         'rise': 'rise 0.3s cubic-bezier(0.22, 1, 0.36, 1) both',
+        // Duration matches SLIDE_MS in pages/Login.tsx.
+        'slidefill': 'slidefill 7s linear forwards',
       },
     },
   },
