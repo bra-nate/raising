@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { Button, Field, Input, Modal } from './ui';
+import { Button, Field, Modal, PasswordInput } from './ui';
 import { changePassword, resetUserPassword, tokenStore } from '../lib/api';
 
 interface PasswordModalProps {
@@ -95,8 +95,7 @@ export function PasswordModal({ open, onClose, target, forced, onDone }: Passwor
       <form onSubmit={handleSubmit} className="space-y-4">
         {!target && (
           <Field label="Current password">
-            <Input
-              type="password"
+            <PasswordInput
               autoComplete="current-password"
               value={current}
               onChange={(e) => setCurrent(e.target.value)}
@@ -105,8 +104,7 @@ export function PasswordModal({ open, onClose, target, forced, onDone }: Passwor
           </Field>
         )}
         <Field label={target ? 'Temporary password' : 'New password'} hint="At least 8 characters.">
-          <Input
-            type="password"
+          <PasswordInput
             autoComplete="new-password"
             value={next}
             onChange={(e) => setNext(e.target.value)}
@@ -115,8 +113,7 @@ export function PasswordModal({ open, onClose, target, forced, onDone }: Passwor
           />
         </Field>
         <Field label="Confirm">
-          <Input
-            type="password"
+          <PasswordInput
             autoComplete="new-password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}

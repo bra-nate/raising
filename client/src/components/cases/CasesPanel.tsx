@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Badge, Button, Card, Field, Input, Modal, Select } from '../ui';
+import { Badge, Button, Card, Field, Input, Modal, Select, SkeletonRows } from '../ui';
 import { acknowledgeCase, assignCase, listCases, resolveCase, updateCase } from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
 import { fullName, relativeDate } from '../../lib/utils';
@@ -97,7 +97,7 @@ export function CasesPanel({
       </div>
 
       {loading ? (
-        <p className="text-body text-faint">Loading…</p>
+        <SkeletonRows rows={3} className="p-0" />
       ) : error ? (
         <p className="text-body text-concern">{error}</p>
       ) : cases.length === 0 ? (

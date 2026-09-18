@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Card } from '../../components/ui';
+import { Badge, Card, SkeletonRows } from '../../components/ui';
 import {
   getConfidentialAccessReview,
   listRetentionCandidates,
@@ -64,7 +64,7 @@ export default function Privacy() {
       back={{ to: '/pastor', label: 'Dashboard' }}
     >
       {loading ? (
-        <p className="text-body text-faint">Loading…</p>
+        <SkeletonRows rows={4} className="p-0" />
       ) : error ? (
         <p className="text-body text-concern">{error}</p>
       ) : (

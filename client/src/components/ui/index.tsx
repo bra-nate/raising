@@ -1,5 +1,6 @@
-import { ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes, ReactNode } from 'react';
+import { ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes, ReactNode, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { IconEye, IconEyeOff } from './icons';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -38,6 +39,44 @@ export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInpu
       className={`w-full rounded-input border border-border bg-surface px-3.5 py-2.5 text-body text-ink-2 outline-none transition placeholder:text-faint focus:border-info focus:shadow-focus ${className}`}
       {...props}
     />
+  );
+}
+
+/** Password field with a reveal toggle — the only way to catch a typo in a masked field. */
+export function PasswordInput({ className = '', ...props }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>) {
+  const [shown, setShown] = useState(false);
+  return (
+    <span className="relative block">
+      <Input type={shown ? 'text' : 'password'} className={`pr-10 ${className}`} {...props} />
+      <button
+        type="button"
+        onClick={() => setShown((v) => !v)}
+        aria-label={shown ? 'Hide password' : 'Show password'}
+        title={shown ? 'Hide password' : 'Show password'}
+        className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-input text-muted transition hover:text-ink-2 focus:outline-none focus-visible:shadow-focus"
+      >
+        {shown ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+      </button>
+    </span>
+  );
+}
+
+/** One shimmering block. Sized by the caller. */
+export function Skeleton({ className = '' }: { className?: string }) {
+  return <div className={`animate-pulse rounded-input bg-wash ${className}`} aria-hidden />;
+}
+
+/**
+ * Placeholder for a list, table or panel that is still loading. Rows taper so
+ * it reads as content rather than a block, and the region is announced as busy.
+ */
+export function SkeletonRows({ rows = 5, className = 'p-5' }: { rows?: number; className?: string }) {
+  return (
+    <div className={`space-y-3 ${className}`} role="status" aria-label="Loading">
+      {Array.from({ length: rows }, (_, i) => (
+        <Skeleton key={i} className={`h-5 ${i === rows - 1 ? 'w-2/5' : i % 3 === 1 ? 'w-4/5' : 'w-full'}`} />
+      ))}
+    </div>
   );
 }
 

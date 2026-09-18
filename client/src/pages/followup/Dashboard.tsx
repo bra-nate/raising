@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Card, Select } from '../../components/ui';
+import { Badge, Card, Select, SkeletonRows } from '../../components/ui';
 import { assignFirstTimer, getFollowUpQueue } from '../../lib/api';
 import { fullName, relativeDate } from '../../lib/utils';
 import { useAuth } from '../../hooks/useAuth';
@@ -58,7 +58,7 @@ export default function FollowUpDashboard() {
       {error ? (
         <p className="text-body text-concern">{error}</p>
       ) : loading ? (
-        <p className="text-body text-faint">Loading the queue…</p>
+        <SkeletonRows rows={6} className="p-0" />
       ) : queue ? (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

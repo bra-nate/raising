@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Button, Field, Input, Modal } from '../../components/ui';
+import { Badge, Button, Field, Input, Modal, SkeletonRows } from '../../components/ui';
 import { IconPlus, IconSearch, IconUpload } from '../../components/ui/icons';
 import {
   createFirstTimer,
@@ -62,7 +62,7 @@ export default function FollowUpFirstTimers() {
 
       <div className="overflow-hidden rounded-card border border-hairline bg-surface shadow-card">
         {loading ? (
-          <div className="p-8 text-body text-faint">Loading…</div>
+          <SkeletonRows rows={6} />
         ) : error ? (
           <div className="p-8 text-body text-concern">{error}</div>
         ) : filtered.length === 0 ? (

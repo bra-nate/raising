@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Button, Field, Input, Modal, Select } from '../../components/ui';
+import { Badge, Button, Field, Input, Modal, Select, SkeletonRows } from '../../components/ui';
 import { IconPlus } from '../../components/ui/icons';
 import { createUser, deactivateUser, listUsers } from '../../lib/api';
 import { PasswordModal } from '../../components/PasswordModal';
@@ -61,7 +61,7 @@ export default function Users() {
     >
       <div className="overflow-hidden rounded-card border border-hairline bg-surface shadow-card">
         {loading ? (
-          <div className="p-8 text-body text-faint">Loading…</div>
+          <SkeletonRows rows={6} />
         ) : error ? (
           <div className="p-8 text-body text-concern">{error}</div>
         ) : users.length === 0 ? (

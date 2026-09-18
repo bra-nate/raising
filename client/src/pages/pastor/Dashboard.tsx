@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Card } from '../../components/ui';
+import { Badge, Card, SkeletonRows } from '../../components/ui';
 import { IconLock } from '../../components/ui/icons';
 import { RecentActivityPanel } from '../../components/dashboard/RecentActivityPanel';
 import { CasesPanel } from '../../components/cases/CasesPanel';
@@ -64,7 +64,7 @@ export default function PastorDashboard() {
                 </Link>
               </div>
               {loading ? (
-                <p className="text-body text-faint">Loading…</p>
+                <SkeletonRows rows={4} className="p-0" />
               ) : !data || data.silence.length === 0 ? (
                 <p className="text-body text-faint">Everyone has a recent report. 🎉</p>
               ) : (
@@ -95,7 +95,7 @@ export default function PastorDashboard() {
             <Card className="p-5">
               <h2 className="mb-4 text-body font-semibold text-ink-2">Recent reports</h2>
               {loading ? (
-                <p className="text-body text-faint">Loading…</p>
+                <SkeletonRows rows={4} className="p-0" />
               ) : !data || data.recentReports.length === 0 ? (
                 <p className="text-body text-faint">No reports yet.</p>
               ) : (

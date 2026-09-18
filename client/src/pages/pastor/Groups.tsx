@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Button, Card, Field, Input, Modal, Select } from '../../components/ui';
+import { Badge, Button, Card, Field, Input, Modal, Select, SkeletonRows } from '../../components/ui';
 import { IconPlus } from '../../components/ui/icons';
 import {
   createGroup,
@@ -70,7 +70,7 @@ export default function Groups() {
       }
     >
       {loading ? (
-        <p className="text-body text-faint">Loading…</p>
+        <SkeletonRows rows={4} className="p-0" />
       ) : error ? (
         <p className="text-body text-concern">{error}</p>
       ) : groups.length === 0 ? (

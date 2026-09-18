@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge } from '../../components/ui';
+import { Badge, SkeletonRows } from '../../components/ui';
 import { listMembers, listUsers } from '../../lib/api';
 import { relativeDate } from '../../lib/utils';
 import type { Member, User } from '../../types';
@@ -90,7 +90,7 @@ export default function PastorLeaders() {
     >
       <div className="overflow-hidden rounded-card border border-hairline bg-surface shadow-card">
         {loading ? (
-          <div className="p-8 text-body text-faint">Loading…</div>
+          <SkeletonRows rows={6} />
         ) : error ? (
           <div className="p-8 text-body text-concern">{error}</div>
         ) : rows.length === 0 ? (

@@ -132,3 +132,18 @@ export const IconMenu = (p: IconProps) => (
     <path d="M4 7h16M4 12h16M4 17h16" />
   </svg>
 );
+
+export const IconEye = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z" />
+    <circle cx="12" cy="12" r="2.6" />
+  </svg>
+);
+
+export const IconEyeOff = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M4 4l16 16" />
+    <path d="M9.6 5.4A9.8 9.8 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.3 3.9M6.4 7.8A17 17 0 0 0 2 12s3.6 6 10 6a9.9 9.9 0 0 0 3.6-.7" />
+    <path d="M10.2 10.3a2.6 2.6 0 0 0 3.6 3.6" />
+  </svg>
+);

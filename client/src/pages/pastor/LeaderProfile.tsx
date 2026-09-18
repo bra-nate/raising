@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Card } from '../../components/ui';
+import { Badge, Card, SkeletonRows } from '../../components/ui';
 import { listMembers, listUsers } from '../../lib/api';
 import { formatDate, fullName, relativeDate, silenceMeta, statusMeta } from '../../lib/utils';
 import { roleLabels } from '../../lib/roles';
@@ -69,7 +69,7 @@ export default function LeaderProfile() {
   if (loading) {
     return (
       <AppShell title="Leader" back={{ to: '/pastor/leaders', label: 'Leaders' }}>
-        <p className="text-body text-faint">Loading…</p>
+        <SkeletonRows rows={4} className="p-0" />
       </AppShell>
     );
   }

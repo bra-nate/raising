@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AppShell } from '../../components/layout/AppShell';
-import { Button } from '../../components/ui';
+import { Button, SkeletonRows } from '../../components/ui';
 import { listActivityLog } from '../../lib/api';
 import { homePathForRole } from '../../lib/roles';
 import { useAuth } from '../../hooks/useAuth';
@@ -54,8 +54,8 @@ export default function Logs() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={4} className="p-8 text-body text-faint">
-                      Loading…
+                    <td colSpan={4}>
+                      <SkeletonRows rows={6} />
                     </td>
                   </tr>
                 ) : logs.length === 0 ? (

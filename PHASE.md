@@ -197,7 +197,7 @@ Each phase is a complete, usable vertical slice. Start a new Claude Code session
 
 - [x] Mobile responsiveness audit — all core flows work at 375px viewport (sidebar becomes a drawer below `md`; header actions wrap to their own row below `sm`; every table already scrolled)
 - [x] Empty states on all list views (no members yet, no reports yet)
-- [ ] Loading skeletons on all async fetches — every async page already shows a loading state in text; skeletons are a perceived-speed upgrade, not a gap
+- [x] Loading skeletons on all async fetches — `SkeletonRows` in `components/ui`, used everywhere a page, panel or table used to print "Loading…"
 - [x] Error states with user-friendly messages (network failure, 403, 404)
 - [x] Security test: log in as a leader and attempt `GET /api/v1/members?assignedLeaderId=<other-leader-id>` directly — must return only own members
 - [x] Security test: attempt to redact or delete a safety-flagged report via direct API call — must return 403

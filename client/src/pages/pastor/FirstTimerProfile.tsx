@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Button, Card, Field, Modal, Select } from '../../components/ui';
+import { Badge, Button, Card, Field, Modal, Select, SkeletonRows } from '../../components/ui';
 import { convertFirstTimer, getFirstTimer, listFirstTimerReports, listUsers } from '../../lib/api';
 import { PrivacyCard } from '../../components/PrivacyCard';
 import { callOutcomeLabels, ftStatusMeta } from '../../lib/firstTimers';
@@ -31,7 +31,7 @@ export default function PastorFirstTimerProfile() {
   if (loading)
     return (
       <AppShell title="First-timer">
-        <div className="p-8 text-body text-faint">Loading…</div>
+        <SkeletonRows rows={6} />
       </AppShell>
     );
   if (error || !ft)

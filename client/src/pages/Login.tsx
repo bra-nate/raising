@@ -2,7 +2,7 @@ import { FormEvent, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { homePathForRole } from '../lib/roles';
-import { Button, Field, Input, Modal } from '../components/ui';
+import { Button, Field, Input, Modal, PasswordInput } from '../components/ui';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { BrandLogo } from '../components/BrandLogo';
 
@@ -82,8 +82,7 @@ export default function Login() {
               />
             </Field>
             <Field label="Password">
-              <Input
-                type="password"
+              <PasswordInput
                 autoComplete="current-password"
                 placeholder="••••••••"
                 value={password}

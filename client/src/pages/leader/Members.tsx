@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Button } from '../../components/ui';
+import { Badge, Button, SkeletonRows } from '../../components/ui';
 import { IconPlus } from '../../components/ui/icons';
 import { listMembers } from '../../lib/api';
 import { fullName, relativeDate, silenceMeta, statusMeta } from '../../lib/utils';
@@ -71,7 +71,7 @@ export default function LeaderMembers() {
 
       <div className="overflow-hidden rounded-card border border-hairline bg-surface shadow-card">
         {loading ? (
-          <div className="p-8 text-body text-faint">Loading…</div>
+          <SkeletonRows rows={6} />
         ) : error ? (
           <div className="p-8 text-body text-concern">{error}</div>
         ) : members.length === 0 ? (

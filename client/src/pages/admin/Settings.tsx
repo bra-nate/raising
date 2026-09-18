@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AppShell } from '../../components/layout/AppShell';
-import { Field, Input, Select } from '../../components/ui';
+import { Field, Input, Select, SkeletonRows } from '../../components/ui';
 import { getSettings, updateSetting } from '../../lib/api';
 import { homePathForRole } from '../../lib/roles';
 import { useAuth } from '../../hooks/useAuth';
@@ -104,7 +104,7 @@ export default function Settings() {
     <AppShell title="Settings" back={{ to: home, label: 'Dashboard' }}>
       {error && <p className="mb-4 text-body text-concern">{error}</p>}
       {loading ? (
-        <p className="text-body text-faint">Loading…</p>
+        <SkeletonRows rows={4} className="p-0" />
       ) : (
         <div className="max-w-xl space-y-6 rounded-card border border-hairline bg-surface p-6 shadow-card">
           {FIELDS.map((f) => (

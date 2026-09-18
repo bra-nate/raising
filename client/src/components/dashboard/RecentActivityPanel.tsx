@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { SkeletonRows } from '../ui';
 import { listActivityLog } from '../../lib/api';
 import type { ActivityLog } from '../../types';
 
@@ -61,7 +62,7 @@ export function RecentActivityPanel({ viewAllTo, limit = 8 }: { viewAllTo: strin
         </Link>
       </div>
       {loading ? (
-        <p className="text-sm text-faint">Loading…</p>
+        <SkeletonRows rows={4} className="p-0" />
       ) : error ? (
         <p className="text-sm text-concern">{error}</p>
       ) : logs.length === 0 ? (

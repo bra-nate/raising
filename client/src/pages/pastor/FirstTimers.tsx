@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Button, Input, Select } from '../../components/ui';
+import { Badge, Button, Input, Select, SkeletonRows } from '../../components/ui';
 import { IconPlus, IconSearch, IconUpload } from '../../components/ui/icons';
 import { listFirstTimers } from '../../lib/api';
 import { ftStatusMeta } from '../../lib/firstTimers';
@@ -87,7 +87,7 @@ export default function PastorFirstTimers() {
 
       <div className="overflow-hidden rounded-card border border-hairline bg-surface shadow-card">
         {loading ? (
-          <div className="p-8 text-body text-faint">Loading…</div>
+          <SkeletonRows rows={6} />
         ) : error ? (
           <div className="p-8 text-body text-concern">{error}</div>
         ) : filtered.length === 0 ? (

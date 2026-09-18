@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Button, Card, Field, Input, Modal, Select } from '../../components/ui';
+import { Badge, Button, Card, Field, Input, Modal, Select, SkeletonRows } from '../../components/ui';
 import { IconPhone } from '../../components/ui/icons';
 import { createFirstTimerReport, getFirstTimer, listFirstTimerReports } from '../../lib/api';
 import { callOutcomeLabels, ftStatusMeta } from '../../lib/firstTimers';
@@ -33,7 +33,7 @@ export default function FollowUpFirstTimerProfile() {
   if (loading)
     return (
       <AppShell title="First-timer">
-        <div className="p-8 text-body text-faint">Loading…</div>
+        <SkeletonRows rows={6} />
       </AppShell>
     );
   if (error || !ft)

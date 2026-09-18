@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Button, Card } from '../../components/ui';
+import { Badge, Button, Card, SkeletonRows } from '../../components/ui';
 import { exportMetricsCsv, getMetrics } from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
 import type { Metrics } from '../../types';
@@ -50,7 +50,7 @@ export default function Insights() {
       }
     >
       {loading ? (
-        <p className="text-body text-faint">Loading…</p>
+        <SkeletonRows rows={4} className="p-0" />
       ) : error ? (
         <p className="text-body text-concern">{error}</p>
       ) : metrics ? (
