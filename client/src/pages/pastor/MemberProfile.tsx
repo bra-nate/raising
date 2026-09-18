@@ -8,7 +8,7 @@ import { IconLock, IconPlus } from '../../components/ui/icons';
 import { ReportModal } from '../../components/reports/ReportModal';
 import { deleteMemberReport, getMember, getSettings, listFirstTimerReports, listGroups, listMemberReports, redactMemberReport, updateMember } from '../../lib/api';
 import { callOutcomeLabels } from '../../lib/firstTimers';
-import { formatDate, fullName, relativeDate, silenceMeta, statusMeta } from '../../lib/utils';
+import { formatDate, formatDateTime, fullName, relativeDate, silenceMeta, statusMeta } from '../../lib/utils';
 import type { FirstTimerReport, Group, Member, MemberReport } from '../../types';
 
 export default function PastorMemberProfile() {
@@ -151,7 +151,7 @@ export default function PastorMemberProfile() {
               <li key={r.id} className="rounded-card border border-hairline bg-surface p-4">
                 <div className="flex items-center justify-between">
                   <Badge tone="info">{callOutcomeLabels[r.callOutcome] ?? r.callOutcome}</Badge>
-                  <span className="text-caption text-faint">{relativeDate(r.createdAt)}</span>
+                  <span className="text-caption text-faint">{formatDateTime(r.createdAt)}</span>
                 </div>
                 {r.content && <p className="mt-2 text-body text-muted">{r.content}</p>}
                 {r.reportedBy && <p className="mt-1 text-caption text-faint">by {r.reportedBy.fullName}</p>}
@@ -284,7 +284,7 @@ function ReportCard({
           )}
           {report.isSafetyFlagged && <Badge tone="concern">Safety flag</Badge>}
         </div>
-        <span className="shrink-0 text-caption text-faint">{formatDate(report.createdAt)}</span>
+        <span className="shrink-0 text-caption text-faint">{formatDateTime(report.createdAt)}</span>
       </div>
       <p className={`mt-3 whitespace-pre-wrap text-body ${redacted ? 'italic text-faint' : 'text-ink-2'}`}>
         {report.content}

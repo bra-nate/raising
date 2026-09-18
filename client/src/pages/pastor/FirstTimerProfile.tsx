@@ -5,7 +5,7 @@ import { Badge, Button, Card, Field, Modal, Select, SkeletonRows } from '../../c
 import { convertFirstTimer, getFirstTimer, listFirstTimerReports, listUsers } from '../../lib/api';
 import { PrivacyCard } from '../../components/PrivacyCard';
 import { callOutcomeLabels, ftStatusMeta } from '../../lib/firstTimers';
-import { relativeDate } from '../../lib/utils';
+import { formatDateTime, relativeDate } from '../../lib/utils';
 import type { FirstTimer, FirstTimerReport, User } from '../../types';
 
 export default function PastorFirstTimerProfile() {
@@ -94,7 +94,7 @@ export default function PastorFirstTimerProfile() {
             <li key={r.id} className="rounded-card border border-hairline bg-surface p-4">
               <div className="flex items-center justify-between">
                 <Badge tone="info">{callOutcomeLabels[r.callOutcome] ?? r.callOutcome}</Badge>
-                <span className="text-caption text-faint">{relativeDate(r.createdAt)}</span>
+                <span className="text-caption text-faint">{formatDateTime(r.createdAt)}</span>
               </div>
               {r.content && <p className="mt-2 text-body text-muted">{r.content}</p>}
               {r.reportedBy && <p className="mt-1 text-caption text-faint">by {r.reportedBy.fullName}</p>}

@@ -6,7 +6,7 @@ import { IconLock } from '../../components/ui/icons';
 import { RecentActivityPanel } from '../../components/dashboard/RecentActivityPanel';
 import { CasesPanel } from '../../components/cases/CasesPanel';
 import { getPastorDashboard } from '../../lib/api';
-import { fullName, relativeDate, silenceMeta, statusMeta } from '../../lib/utils';
+import { formatDateTime, fullName, relativeDate, silenceMeta, statusMeta } from '../../lib/utils';
 import { useAuth } from '../../hooks/useAuth';
 import type { PastorDashboard as DashboardData } from '../../types';
 
@@ -113,7 +113,7 @@ export default function PastorDashboard() {
                           </span>
                           {r.isConfidential && <IconLock className="h-3.5 w-3.5 shrink-0 text-info" />}
                         </span>
-                        <span className="shrink-0 text-caption text-faint">{relativeDate(r.createdAt)}</span>
+                        <span className="shrink-0 text-caption text-faint">{formatDateTime(r.createdAt)}</span>
                       </Link>
                     </li>
                   ))}

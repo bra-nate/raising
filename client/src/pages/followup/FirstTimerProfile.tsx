@@ -5,7 +5,7 @@ import { Badge, Button, Card, Field, Input, Modal, Select, SkeletonRows } from '
 import { IconPhone } from '../../components/ui/icons';
 import { createFirstTimerReport, getFirstTimer, listFirstTimerReports } from '../../lib/api';
 import { callOutcomeLabels, ftStatusMeta } from '../../lib/firstTimers';
-import { relativeDate } from '../../lib/utils';
+import { formatDateTime, relativeDate } from '../../lib/utils';
 import type { CallOutcome, FirstTimer, FirstTimerReport } from '../../types';
 
 const OUTCOMES: CallOutcome[] = ['answered', 'no_answer', 'callback_requested', 'interested', 'not_interested'];
@@ -90,7 +90,7 @@ export default function FollowUpFirstTimerProfile() {
             <li key={r.id} className="rounded-card border border-hairline bg-surface p-4">
               <div className="flex items-center justify-between">
                 <Badge tone="info">{callOutcomeLabels[r.callOutcome] ?? r.callOutcome}</Badge>
-                <span className="text-caption text-faint">{relativeDate(r.createdAt)}</span>
+                <span className="text-caption text-faint">{formatDateTime(r.createdAt)}</span>
               </div>
               {r.content && <p className="mt-2 text-body text-muted">{r.content}</p>}
               {r.reportedBy && <p className="mt-1 text-caption text-faint">by {r.reportedBy.fullName}</p>}

@@ -6,7 +6,7 @@ import { CasesPanel } from '../../components/cases/CasesPanel';
 import { IconPlus } from '../../components/ui/icons';
 import { ReportModal } from '../../components/reports/ReportModal';
 import { getMember, listMemberReports } from '../../lib/api';
-import { formatDate, fullName, relativeDate, silenceMeta, statusMeta } from '../../lib/utils';
+import { formatDate, formatDateTime, fullName, relativeDate, silenceMeta, statusMeta } from '../../lib/utils';
 import type { Member, MemberReport } from '../../types';
 
 export default function LeaderMemberProfile() {
@@ -145,7 +145,7 @@ function ReportCard({ report }: { report: MemberReport }) {
           {report.isConfidential && <Badge tone="info">Confidential</Badge>}
           {report.isSafetyFlagged && <Badge tone="concern">Safety flag</Badge>}
         </div>
-        <span className="shrink-0 text-caption text-faint">{formatDate(report.createdAt)}</span>
+        <span className="shrink-0 text-caption text-faint">{formatDateTime(report.createdAt)}</span>
       </div>
       <p className={`mt-3 whitespace-pre-wrap text-body ${redacted ? 'italic text-faint' : 'text-ink-2'}`}>
         {report.content}
