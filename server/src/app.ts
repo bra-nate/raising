@@ -15,6 +15,7 @@ import caseRoutes from './routes/cases';
 import groupRoutes from './routes/groups';
 import metricsRoutes from './routes/metrics';
 import privacyRoutes from './routes/privacy';
+import cronRoutes from './routes/cron';
 import { errorHandler } from './middleware/errorHandler';
 
 export function createApp() {
@@ -41,6 +42,7 @@ export function createApp() {
   app.use('/api/v1/groups', groupRoutes);
   app.use('/api/v1/metrics', metricsRoutes);
   app.use('/api/v1/privacy', privacyRoutes);
+  app.use('/api/v1/internal/cron', cronRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({ error: 'Not found' });
