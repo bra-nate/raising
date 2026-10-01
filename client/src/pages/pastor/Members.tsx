@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Button, Input, Select, SkeletonRows } from '../../components/ui';
-import { IconDownload, IconPlus, IconSearch } from '../../components/ui/icons';
+import { Badge, Button, SkeletonRows } from '../../components/ui';
+import {
+  MemberFilters,
+  applyMemberFilters,
+  emptyMemberFilters,
+  type MemberFilterState,
+} from '../../components/filters/MemberFilters';
+import { IconDownload, IconPlus } from '../../components/ui/icons';
 import { exportMembersCsv, listMembers } from '../../lib/api';
 import { fullName, relativeDate, silenceMeta, statusMeta } from '../../lib/utils';
 import type { Member, SilenceStatus, StatusTag } from '../../types';
@@ -13,11 +19,12 @@ export default function PastorMembers() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
-  const [leader, setLeader] = useState(params.get('leader') || 'all');
-  const [group, setGroup] = useState('all');
-  const [status, setStatus] = useState<'all' | StatusTag>((params.get('status') as StatusTag) || 'all');
-  const [silence, setSilence] = useState<'all' | SilenceStatus>((params.get('silence') as SilenceStatus) || 'all');
+  const [filters, setFilters] = useState<MemberFilterState>({
+    ...emptyMemberFilters,
+    leader: params.get('leader') || 'all',
+    status: (params.get('status') as StatusTag) || 'all',
+    silence: (params.get('silence') as SilenceStatus) || 'all',
+  });
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
@@ -36,32 +43,13 @@ export default function PastorMembers() {
   // Keep status/silence in the URL so dashboard stat cards can deep-link here.
   useEffect(() => {
     const next = new URLSearchParams();
-    if (leader !== 'all') next.set('leader', leader);
-    if (status !== 'all') next.set('status', status);
-    if (silence !== 'all') next.set('silence', silence);
+    if (filters.leader !== 'all') next.set('leader', filters.leader);
+    if (filters.status !== 'all') next.set('status', filters.status);
+    if (filters.silence !== 'all') next.set('silence', filters.silence);
     setParams(next, { replace: true });
-  }, [leader, status, silence, setParams]);
+  }, [filters.leader, filters.status, filters.silence, setParams]);
 
-  const leaders = useMemo(
-    () => Array.from(new Set(members.map((m) => m.assignedLeader?.fullName).filter(Boolean))) as string[],
-    [members]
-  );
-  const groups = useMemo(
-    () => Array.from(new Set(members.map((m) => m.group?.name).filter(Boolean))) as string[],
-    [members]
-  );
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return members.filter((m) => {
-      if (leader !== 'all' && m.assignedLeader?.fullName !== leader) return false;
-      if (group !== 'all' && m.group?.name !== group) return false;
-      if (status !== 'all' && m.latestStatus !== status) return false;
-      if (silence !== 'all' && (m.silence ?? 'ok') !== silence) return false;
-      if (q && !fullName(m).toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [members, search, leader, group, status, silence]);
+  const filtered = useMemo(() => applyMemberFilters(members, filters), [members, filters]);
 
   async function handleExport() {
     setExporting(true);
@@ -98,46 +86,7 @@ export default function PastorMembers() {
         </div>
       }
     >
-      {/* Filters */}
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <div className="relative sm:col-span-2 lg:col-span-1">
-          <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name…"
-            className="pl-9"
-          />
-        </div>
-        <Select value={leader} onChange={(e) => setLeader(e.target.value)}>
-          <option value="all">All leaders</option>
-          {leaders.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </Select>
-        <Select value={group} onChange={(e) => setGroup(e.target.value)}>
-          <option value="all">All groups</option>
-          {groups.map((g) => (
-            <option key={g} value={g}>
-              {g}
-            </option>
-          ))}
-        </Select>
-        <Select value={status} onChange={(e) => setStatus(e.target.value as 'all' | StatusTag)}>
-          <option value="all">Any status</option>
-          <option value="good">Good</option>
-          <option value="needs_attention">Needs Attention</option>
-          <option value="concern">Concern</option>
-        </Select>
-        <Select value={silence} onChange={(e) => setSilence(e.target.value as 'all' | SilenceStatus)}>
-          <option value="all">Any silence</option>
-          <option value="ok">On track</option>
-          <option value="overdue">Overdue</option>
-          <option value="significant">Significantly overdue</option>
-        </Select>
-      </div>
+      <MemberFilters members={members} value={filters} onChange={setFilters} />
 
       <div className="overflow-hidden rounded-card border border-hairline bg-surface shadow-card">
         {loading ? (

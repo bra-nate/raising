@@ -28,7 +28,7 @@ export function AppShell({ title, subtitle, actions, back, children }: AppShellP
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar */}
         {/* Below sm the action group wraps to its own row so the title keeps its width. */}
-        <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-hairline px-4 py-2 sm:h-14 sm:flex-nowrap sm:py-0 sm:px-6">
+        <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-hairline px-4 py-2 sm:min-h-16 sm:flex-nowrap sm:px-6">
           <button
             onClick={() => setNavOpen(true)}
             aria-label="Open navigation"
@@ -36,18 +36,21 @@ export function AppShell({ title, subtitle, actions, back, children }: AppShellP
           >
             <IconMenu className="h-5 w-5" />
           </button>
-          <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             {back && (
               <Link
                 to={back.to}
-                className="mb-0.5 inline-flex items-center gap-1 text-caption text-muted transition hover:text-accent"
+                aria-label={`Back to ${back.label}`}
+                title={`Back to ${back.label}`}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill border border-hairline text-muted transition hover:bg-wash hover:text-ink-2 focus:outline-none focus-visible:shadow-focus"
               >
-                <IconChevronLeft className="h-3 w-3" />
-                {back.label}
+                <IconChevronLeft className="h-4 w-4" />
               </Link>
             )}
-            <h1 className="truncate text-heading-sm font-semibold text-ink-2">{title}</h1>
-            {subtitle && <p className="truncate text-caption text-faint">{subtitle}</p>}
+            <div className="min-w-0">
+              <h1 className="truncate text-heading-sm font-semibold text-ink-2">{title}</h1>
+              {subtitle && <p className="truncate text-caption text-faint">{subtitle}</p>}
+            </div>
           </div>
           <div className="flex shrink-0 basis-full items-center justify-end gap-2 sm:basis-auto">
             {actions}

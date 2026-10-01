@@ -2,20 +2,23 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, SkeletonRows } from '../../components/ui';
+import {
+  MemberFilters,
+  applyMemberFilters,
+  emptyMemberFilters,
+  type MemberFilterState,
+} from '../../components/filters/MemberFilters';
 import { IconPlus } from '../../components/ui/icons';
 import { listMembers } from '../../lib/api';
 import { fullName, relativeDate, silenceMeta, statusMeta } from '../../lib/utils';
 import type { Member } from '../../types';
-
-type SortKey = 'name' | 'silence' | 'lastReport';
-const SILENCE_RANK: Record<string, number> = { significant: 0, overdue: 1, ok: 2 };
 
 export default function LeaderMembers() {
   const navigate = useNavigate();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [sort, setSort] = useState<SortKey>('silence');
+  const [filters, setFilters] = useState<MemberFilterState>(emptyMemberFilters);
 
   useEffect(() => {
     (async () => {
@@ -30,22 +33,12 @@ export default function LeaderMembers() {
     })();
   }, []);
 
-  const sorted = useMemo(() => {
-    const list = [...members];
-    if (sort === 'name') list.sort((a, b) => fullName(a).localeCompare(fullName(b)));
-    else if (sort === 'silence')
-      list.sort((a, b) => SILENCE_RANK[a.silence ?? 'ok'] - SILENCE_RANK[b.silence ?? 'ok']);
-    else
-      list.sort(
-        (a, b) => new Date(a.lastReportDate ?? 0).getTime() - new Date(b.lastReportDate ?? 0).getTime()
-      );
-    return list;
-  }, [members, sort]);
+  const sorted = useMemo(() => applyMemberFilters(members, filters), [members, filters]);
 
   return (
     <AppShell
       title="My Members"
-      subtitle={loading ? undefined : `${members.length} total`}
+      subtitle={loading ? undefined : `${sorted.length} of ${members.length} shown`}
       back={{ to: '/leader', label: 'Dashboard' }}
       actions={
         <Button variant="primary" onClick={() => navigate('/leader/members/new')}>
@@ -54,20 +47,7 @@ export default function LeaderMembers() {
         </Button>
       }
     >
-      <div className="mb-4 flex items-center gap-2 text-caption text-muted">
-        <span>Sort by</span>
-        {(['silence', 'name', 'lastReport'] as SortKey[]).map((k) => (
-          <button
-            key={k}
-            onClick={() => setSort(k)}
-            className={`rounded-badge px-2 py-1 font-medium transition ${
-              sort === k ? 'bg-accent/10 text-accent' : 'text-muted hover:bg-wash'
-            }`}
-          >
-            {k === 'silence' ? 'Silence' : k === 'name' ? 'Name' : 'Last report'}
-          </button>
-        ))}
-      </div>
+      <MemberFilters members={members} value={filters} onChange={setFilters} />
 
       <div className="overflow-hidden rounded-card border border-hairline bg-surface shadow-card">
         {loading ? (
@@ -78,6 +58,11 @@ export default function LeaderMembers() {
           <div className="p-12 text-center">
             <p className="text-body font-medium text-ink-2">No members yet</p>
             <p className="mt-1 text-caption text-faint">Add the people in your care to begin.</p>
+          </div>
+        ) : sorted.length === 0 ? (
+          <div className="p-12 text-center">
+            <p className="text-body font-medium text-ink-2">No members match</p>
+            <p className="mt-1 text-caption text-faint">Try clearing a filter or search term.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

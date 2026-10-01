@@ -1,21 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
-import { Badge, Button, Input, Select, SkeletonRows } from '../../components/ui';
-import { IconPlus, IconSearch, IconUpload } from '../../components/ui/icons';
+import { Badge, Button, SkeletonRows } from '../../components/ui';
+import {
+  FirstTimerFilters,
+  applyFirstTimerFilters,
+  emptyFirstTimerFilters,
+  type FirstTimerFilterState,
+} from '../../components/filters/FirstTimerFilters';
+import { IconPlus, IconUpload } from '../../components/ui/icons';
 import { listFirstTimers } from '../../lib/api';
 import { ftStatusMeta } from '../../lib/firstTimers';
 import { relativeDate } from '../../lib/utils';
-import type { FirstTimer, FirstTimerStatus } from '../../types';
+import type { FirstTimer } from '../../types';
 import { AddFirstTimerModal, UploadModal } from '../followup/FirstTimers';
 
 export default function PastorFirstTimers() {
   const [items, setItems] = useState<FirstTimer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<'all' | FirstTimerStatus>('all');
-  const [assignee, setAssignee] = useState('all');
+  const [filters, setFilters] = useState<FirstTimerFilterState>(emptyFirstTimerFilters);
   const [showAdd, setShowAdd] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
 
@@ -29,20 +33,7 @@ export default function PastorFirstTimers() {
       .finally(() => setLoading(false));
   }, []);
 
-  const assignees = useMemo(
-    () => Array.from(new Set(items.map((f) => f.assignedTo?.fullName).filter(Boolean))) as string[],
-    [items]
-  );
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return items.filter((f) => {
-      if (status !== 'all' && f.status !== status) return false;
-      if (assignee !== 'all' && (f.assignedTo?.fullName ?? '') !== assignee) return false;
-      if (q && !`${f.firstName} ${f.lastName}`.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [items, search, status, assignee]);
+  const filtered = useMemo(() => applyFirstTimerFilters(items, filters), [items, filters]);
 
   return (
     <AppShell
@@ -62,28 +53,7 @@ export default function PastorFirstTimers() {
         </div>
       }
     >
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="relative sm:col-span-2 lg:col-span-1">
-          <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name…" className="pl-9" />
-        </div>
-        <Select value={status} onChange={(e) => setStatus(e.target.value as 'all' | FirstTimerStatus)}>
-          <option value="all">Any status</option>
-          <option value="pending">Pending</option>
-          <option value="contacted">Contacted</option>
-          <option value="interested">Interested</option>
-          <option value="not_interested">Not interested</option>
-          <option value="converted">Converted</option>
-        </Select>
-        <Select value={assignee} onChange={(e) => setAssignee(e.target.value)}>
-          <option value="all">Anyone</option>
-          {assignees.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </Select>
-      </div>
+      <FirstTimerFilters items={items} value={filters} onChange={setFilters} />
 
       <div className="overflow-hidden rounded-card border border-hairline bg-surface shadow-card">
         {loading ? (

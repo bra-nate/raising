@@ -2,7 +2,13 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, Field, Input, Modal, SkeletonRows } from '../../components/ui';
-import { IconPlus, IconSearch, IconUpload } from '../../components/ui/icons';
+import {
+  FirstTimerFilters,
+  applyFirstTimerFilters,
+  emptyFirstTimerFilters,
+  type FirstTimerFilterState,
+} from '../../components/filters/FirstTimerFilters';
+import { IconPlus, IconUpload } from '../../components/ui/icons';
 import {
   createFirstTimer,
   listFirstTimers,
@@ -17,7 +23,7 @@ export default function FollowUpFirstTimers() {
   const [items, setItems] = useState<FirstTimer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<FirstTimerFilterState>(emptyFirstTimerFilters);
   const [showAdd, setShowAdd] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
 
@@ -32,11 +38,7 @@ export default function FollowUpFirstTimers() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((f) => `${f.firstName} ${f.lastName}`.toLowerCase().includes(q));
-  }, [items, search]);
+  const filtered = useMemo(() => applyFirstTimerFilters(items, filters), [items, filters]);
 
   return (
     <AppShell
@@ -55,20 +57,22 @@ export default function FollowUpFirstTimers() {
         </div>
       }
     >
-      <div className="mb-4 relative max-w-sm">
-        <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name…" className="pl-9" />
-      </div>
+      <FirstTimerFilters items={items} value={filters} onChange={setFilters} />
 
       <div className="overflow-hidden rounded-card border border-hairline bg-surface shadow-card">
         {loading ? (
           <SkeletonRows rows={6} />
         ) : error ? (
           <div className="p-8 text-body text-concern">{error}</div>
-        ) : filtered.length === 0 ? (
+        ) : items.length === 0 ? (
           <div className="p-12 text-center">
             <p className="text-body font-medium text-ink-2">No first-timers yet</p>
             <p className="mt-1 text-caption text-faint">Upload a meeting list or add one to get started.</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="p-12 text-center">
+            <p className="text-body font-medium text-ink-2">No first-timers match</p>
+            <p className="mt-1 text-caption text-faint">Try clearing a filter or search term.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
