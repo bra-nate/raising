@@ -22,18 +22,20 @@ async function main() {
     await prisma.setting.upsert({ where: { key: s.key }, update: {}, create: s });
   }
 
-  // Pastor account — change password after first login
-  const hash = await bcrypt.hash('changeme123', 12);
-  await prisma.user.upsert({
-    where: { email: 'pastor@raising.local' },
-    update: {},
-    create: {
-      fullName: 'Pastor',
-      email: 'pastor@raising.local',
-      password: hash,
-      role: 'pastor',
-    },
-  });
+  // Keep the convenient local account out of production deployments.
+  if (process.env.NODE_ENV !== 'production') {
+    const hash = await bcrypt.hash('changeme123', 12);
+    await prisma.user.upsert({
+      where: { email: 'pastor@raising.local' },
+      update: {},
+      create: {
+        fullName: 'Pastor',
+        email: 'pastor@raising.local',
+        password: hash,
+        role: 'pastor',
+      },
+    });
+  }
 
   // Optional superadmin bootstrap — only when env vars are provided. Idempotent.
   const saEmail = process.env.SUPERADMIN_EMAIL?.toLowerCase().trim();
@@ -50,6 +52,7 @@ async function main() {
           email: saEmail,
           password: saHash,
           role: 'superadmin',
+          mustChangePassword: true,
         },
       });
       console.log(`Superadmin created: ${created.email}`);
@@ -58,7 +61,7 @@ async function main() {
     console.log('SUPERADMIN_EMAIL/PASSWORD not set; skipping superadmin bootstrap.');
   }
 
-  console.log('Seed complete. Pastor login: pastor@raising.local / changeme123');
+  console.log('Seed complete.');
 }
 
 main()

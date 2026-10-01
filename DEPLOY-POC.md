@@ -13,7 +13,7 @@ cd server
 DATABASE_URL='<session-or-direct-url>' pnpm exec prisma migrate deploy
 ```
 
-Create a first account with the existing seed after setting `SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD`, and `SUPERADMIN_NAME`. Do not run the demo seed with real data.
+Create a first account with the existing seed after setting `NODE_ENV=production`, `SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD`, and `SUPERADMIN_NAME`. Production mode skips the local default pastor account and requires the superadmin to change the bootstrap password after signing in. Do not run the demo seed with real data.
 
 ## 2. Create two Vercel projects from this repository
 
