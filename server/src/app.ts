@@ -52,3 +52,7 @@ export function createApp() {
 
   return app;
 }
+
+// Vercel detects `src/app.ts` as the serverless entry point, so it needs the
+// ready-to-handle Express app as its default export.
+export default createApp();

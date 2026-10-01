@@ -5,6 +5,7 @@ build/
 .env.local
 .env.test
 .env.*.local
+.vercel/
 *.log
 .DS_Store
 
