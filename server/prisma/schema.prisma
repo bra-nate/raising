@@ -121,6 +121,13 @@ enum ReminderDay {
   sunday
 }
 
+enum EmailDeliveryStatus {
+  pending
+  sent
+  failed
+  skipped
+}
+
 // ─────────────────────────────────────────────
 // MODELS
 // ─────────────────────────────────────────────
@@ -333,6 +340,22 @@ model Notification {
   user User @relation(fields: [userId], references: [id])
 
   @@map("notifications")
+}
+
+model EmailDelivery {
+  id         String              @id @default(uuid())
+  recipient  String
+  subject    String
+  status     EmailDeliveryStatus @default(pending)
+  attempts   Int                 @default(0)
+  providerId String?
+  lastError  String?
+  sentAt     DateTime?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@index([status, createdAt])
+  @@map("email_deliveries")
 }
 
 model Setting {

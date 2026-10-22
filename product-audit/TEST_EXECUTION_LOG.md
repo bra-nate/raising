@@ -99,6 +99,15 @@ WP0 and WP1 added an isolated PostgreSQL container workflow, a database-name saf
 | Second full backend run | PASS — 140/140 |
 | `pnpm build` | PASS — server and client production builds |
 | `git diff --check` | PASS |
+
+WP3 code added the twelfth migration for an email-delivery ledger, configurable production sender enforcement, bounded transient retry, permanent-failure handling, and cron completion logging.
+
+| Check | Result |
+|---|---|
+| Full backend suite | PASS — 20 files and 166 tests on immediate rerun |
+| Provider simulations | PASS — sent, transient recovery, transient final failure, permanent rejection, and skipped email with retained in-app alert |
+| `pnpm build` | PASS — server and client production builds |
+| External boundary | Hourly scheduler, verified Resend domain, live delivery, and missed-run alerts still require staging/project access |
 | Cleanup | Temporary test container and Compose network removed with `pnpm test:db:down` |
 
 The original blocked result above remains the audit-time record. This update demonstrates that backend assertions are now executable; it does not claim that authenticated browser journeys have run.

@@ -51,11 +51,13 @@ describe('a report that names a problem opens a case', () => {
   });
 
   it('opens a safety case when the report is safety-flagged, whatever the status tag', async () => {
-    const { leader, member } = await scenario();
+    const { pastor, leader, member } = await scenario();
     await submitReport(leader, member.id, 'good', true);
 
     const c = await prisma.case.findFirstOrThrow({ where: { memberId: member.id } });
     expect(c.kind).toBe('safety');
+    expect(await prisma.notification.count({ where: { userId: pastor.id, type: 'safety_flag' } })).toBe(1);
+    expect(await prisma.emailDelivery.findFirst()).toMatchObject({ status: 'skipped', attempts: 0 });
   });
 
   it('opens no case for a plain good report', async () => {

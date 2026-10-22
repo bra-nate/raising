@@ -16,7 +16,7 @@ function assertTestDatabase(): void {
 // activity_logs, settings (all reference users). RESTART IDENTITY resets seqs.
 export async function resetDb(): Promise<void> {
   assertTestDatabase();
-  await prisma.$executeRawUnsafe('TRUNCATE TABLE users RESTART IDENTITY CASCADE');
+  await prisma.$executeRawUnsafe('TRUNCATE TABLE users, email_deliveries RESTART IDENTITY CASCADE');
 }
 
 beforeEach(async () => {

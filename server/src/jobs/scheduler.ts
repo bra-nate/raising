@@ -97,8 +97,10 @@ export async function runSilenceDetection(now: Date = new Date()): Promise<void>
  * Safety escalation: hourly, because a safeguarding acknowledgement window is
  * measured in hours, not days. The dedupe lives in the service.
  */
-export async function runSafetyEscalation(now: Date = new Date()): Promise<void> {
-  await casesService.escalateStaleSafetyCases(now);
+export async function runSafetyEscalation(now: Date = new Date()) {
+  const result = await casesService.escalateStaleSafetyCases(now);
+  console.info(`[cron:safety-escalation] escalated=${result.escalated}`);
+  return result;
 }
 
 /** Retention review: daily. Flags only — redaction is always a pastor's act. */

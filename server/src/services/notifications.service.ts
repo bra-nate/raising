@@ -28,36 +28,69 @@ async function createNotification(args: CreateNotificationArgs) {
   });
 }
 
-/**
- * Send a transactional email via the Resend REST API. When no API key is
- * configured (local dev), this logs and no-ops rather than throwing — a missing
- * email must never break the operation that triggered it.
- */
-async function sendEmail(to: string, subject: string, html: string): Promise<void> {
-  if (!config.resendApiKey) {
-    console.log(`[email:skipped] no RESEND_API_KEY — would send "${subject}" to ${to}`);
-    return;
-  }
+type DeliveryResult = { status: 'sent' | 'failed' | 'skipped'; attempts: number };
+
+async function updateDelivery(id: string, data: Prisma.EmailDeliveryUpdateInput): Promise<void> {
   try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${config.resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'raising <notifications@raising.local>',
-        to,
-        subject,
-        html,
-      }),
-    });
-    if (!res.ok) {
-      console.error(`[email:failed] ${res.status} sending "${subject}" to ${to}`);
-    }
-  } catch (err) {
-    console.error('[email:error]', err);
+    await prisma.emailDelivery.update({ where: { id }, data });
+  } catch (error) {
+    console.error('[email:ledger-failed]', error);
   }
+}
+
+/** Email is secondary to the in-app alert: every outcome is recorded, none throw. */
+async function sendEmail(to: string, subject: string, html: string): Promise<DeliveryResult> {
+  if (!config.resendApiKey) {
+    try {
+      await prisma.emailDelivery.create({ data: { recipient: to, subject, status: 'skipped' } });
+    } catch (error) {
+      console.error('[email:ledger-failed]', error);
+    }
+    return { status: 'skipped', attempts: 0 };
+  }
+
+  let deliveryId: string;
+  try {
+    deliveryId = (await prisma.emailDelivery.create({ data: { recipient: to, subject } })).id;
+  } catch (error) {
+    console.error('[email:ledger-failed]', error);
+    return { status: 'failed', attempts: 0 };
+  }
+
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${config.resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ from: config.emailFrom, to, subject, html }),
+      });
+
+      if (response.ok) {
+        const body = await response.json().catch(() => null) as { id?: string } | null;
+        await updateDelivery(deliveryId, {
+          status: 'sent', attempts: attempt, providerId: body?.id, sentAt: new Date(), lastError: null,
+        });
+        return { status: 'sent', attempts: attempt };
+      }
+
+      const transient = response.status === 429 || response.status >= 500;
+      const lastError = `Resend returned HTTP ${response.status}`;
+      await updateDelivery(deliveryId, {
+        status: transient && attempt < 3 ? 'pending' : 'failed', attempts: attempt, lastError,
+      });
+      if (!transient) return { status: 'failed', attempts: attempt };
+    } catch (error) {
+      const lastError = (error instanceof Error ? error.message : 'Network error').slice(0, 500);
+      await updateDelivery(deliveryId, {
+        status: attempt < 3 ? 'pending' : 'failed', attempts: attempt, lastError,
+      });
+    }
+  }
+
+  return { status: 'failed', attempts: 3 };
 }
 
 async function list(userId: string) {

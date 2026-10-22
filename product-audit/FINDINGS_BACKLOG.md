@@ -30,6 +30,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-002 — Safety escalation is not scheduled in the current deployment
 
+- **Remediation status (2026-10-22):** Partially fixed. The protected hourly endpoint, escalation/dedupe behavior, and structured run logging are tested. Vercel Pro or an equivalent scheduler plus missed-run alerting still require deployment access.
 - **Type:** Operational reliability
 - **Priority:** P1
 - **Persona / journey:** Pastor; safety report → acknowledgement/escalation
@@ -44,6 +45,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-003 — Critical email delivery is placeholder-based and not observable
 
+- **Remediation status (2026-10-22):** Code complete; staging evidence open. Production email now requires a configured `EMAIL_FROM` when Resend is enabled; delivery status, attempts, provider ID, and last error persist without storing the body. Transient responses retry three times, permanent failures stop, and in-app safety alerts remain independent.
 - **Type:** Reliability / safety communication
 - **Priority:** P1
 - **Persona / journey:** Pastor; safety alert and role-change oversight
@@ -58,7 +60,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-004 — No authenticated end-to-end release evidence is currently executable
 
-- **Remediation status (2026-10-22):** Partially fixed. A one-command isolated PostgreSQL workflow now runs all 156 backend tests successfully; authenticated browser E2E coverage remains open under PR-013/WP6 and WP9.
+- **Remediation status (2026-10-22):** Partially fixed. A one-command isolated PostgreSQL workflow now runs all 166 backend tests successfully; authenticated browser E2E coverage remains open under PR-013/WP6 and WP9.
 - **Type:** Verification / release gate
 - **Priority:** P1
 - **Persona / journey:** All roles and all critical journeys

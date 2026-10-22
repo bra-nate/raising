@@ -19,7 +19,7 @@ Create a first account with the existing seed after setting `NODE_ENV=production
 
 | Project | Root Directory | Environment variables |
 | --- | --- | --- |
-| API | `server` | `DATABASE_URL` (transaction pooler), `JWT_SECRET` (32+ characters), `CLIENT_URL` (frontend production URL), `CRON_SECRET` (random 16+ characters), optional `RESEND_API_KEY` |
+| API | `server` | `DATABASE_URL` (transaction pooler), `JWT_SECRET` (32+ characters), `CLIENT_URL` (frontend production URL), `CRON_SECRET` (random 16+ characters), optional `RESEND_API_KEY` + verified `EMAIL_FROM` |
 | Web | `client` | `VITE_API_URL` (API production URL, without `/api/v1`) |
 
 Use the default Express and Vite framework presets. Vercel detects `server/src/app.ts` as the Express entry point; `server/src/index.ts` re-exports the same app for other runtimes. The Vite SPA rewrite is in `client/vercel.json`. Enable **Include source files outside of the Root Directory in the Build Step** for the web project because `client/vite.config.ts` reads images from the repo's top-level `public/` directory. Set `CLIENT_URL` to the exact web origin for CORS, with no trailing slash. When the API URL changes, rebuild the web project: Vite embeds `VITE_API_URL` at build time.

@@ -22,12 +22,13 @@ router.get('/daily', asyncHandler(async (_req, res) => {
   await runSilenceDetection();
   await runRetentionReview();
   await runReportReminder();
+  console.info('[cron:daily] completed');
   res.json({ status: 'ok' });
 }));
 
 router.get('/hourly', asyncHandler(async (_req, res) => {
-  await runSafetyEscalation();
-  res.json({ status: 'ok' });
+  const result = await runSafetyEscalation();
+  res.json({ status: 'ok', ...result });
 }));
 
 export default router;

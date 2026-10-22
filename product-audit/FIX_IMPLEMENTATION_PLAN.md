@@ -9,14 +9,15 @@
 
 | Package | Status | Evidence |
 |---|---|---|
-| WP0 — Disposable test database | Complete | `pnpm test` creates isolated PostgreSQL, applies 11 migrations, and the expanded suite now passes 162/162 |
+| WP0 — Disposable test database | Complete | `pnpm test` creates isolated PostgreSQL, applies 12 migrations, and the expanded suite now passes 166/166 |
 | WP1 — Current-state authorization | Complete | Five regression cases cover deactivate, demote, promote, administrator reset, and deleted user; released in `701a2f0` |
 | WP2 — Login abuse controls and headers | Code complete; deployment action open | Tested per-instance throttle, API headers, strict client CSP, and exact Vercel WAF rule documented; WAF activation/monitoring requires project access |
+| WP3 — Safety scheduler and observable email | Code complete; deployment actions open | Configurable verified sender, delivery ledger, bounded retries, provider-outcome tests, and cron logging pass; hourly schedule/provider staging evidence require project access |
 | WP4 — Settings and member data integrity | Complete | Settings, null clearing, assignment integrity, normalized duplicate detection, explicit override, and override audit evidence pass |
 | WP5 — Member editing and audit investigation | Code complete | Shared edit workflow and URL-backed actor/action/date audit filters build; API boundary tests pass; browser certification remains WP9 |
-| WP3, WP6–WP9 | Not started | Retain planned order below |
+| WP6–WP9 | Not started | Retain planned order below |
 
-The first full run produced one transient five-second timeout in the metrics median test. It passed alone in 105 ms and every subsequent full run passed. The latest suite contains 19 files and 162 passing tests.
+Two full runs have produced isolated five-second timeouts in otherwise fast tests; both passed alone in under 110 ms and the immediate full reruns passed. The latest suite contains 20 files and 166 passing tests.
 
 ## Strategy
 
