@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { navForRole } from '../../lib/nav';
 import { roleLabels } from '../../lib/roles';
 import { ThemeToggle } from '../ThemeToggle';
-import { IconLock, IconLogout } from '../ui/icons';
+import { IconLock, IconLogout, IconX } from '../ui/icons';
 import { PasswordModal } from '../PasswordModal';
 import { BrandLogo } from '../BrandLogo';
 
@@ -19,21 +19,59 @@ function initials(name: string) {
 }
 
 /** `open` only applies below md — from md up the rail is always in the layout. */
-export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNavigate?: () => void }) {
+export function Sidebar({
+  open = false,
+  isMobile,
+  onClose,
+  onNavigate,
+}: {
+  open?: boolean;
+  isMobile: boolean;
+  onClose: () => void;
+  onNavigate?: () => void;
+}) {
   const { user, logout } = useAuth();
   const [pwOpen, setPwOpen] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (isMobile && open) closeButtonRef.current?.focus();
+  }, [isMobile, open]);
+
+  useEffect(() => {
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+    if (isMobile && !open) sidebar.setAttribute('inert', '');
+    else sidebar.removeAttribute('inert');
+    return () => sidebar.removeAttribute('inert');
+  }, [isMobile, open]);
+
   if (!user) return null;
   const groups = navForRole(user.role);
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-40 flex h-full w-60 shrink-0 flex-col border-r border-hairline bg-canvas transition-transform md:static md:translate-x-0 ${
+      ref={sidebarRef}
+      id="primary-navigation"
+      aria-label="Primary navigation"
+      aria-hidden={isMobile && !open ? true : undefined}
+      className={`fixed inset-y-0 left-0 z-40 flex h-full w-72 shrink-0 flex-col border-r border-hairline bg-canvas transition-transform md:static md:w-60 md:translate-x-0 ${
         open ? 'translate-x-0' : '-translate-x-full'
       }`}
     >
       {/* Brand */}
-      <div className="flex h-14 items-center px-5">
+      <div className="flex h-14 items-center justify-between px-5">
         <BrandLogo className="h-7 w-auto" />
+        <button
+          ref={closeButtonRef}
+          type="button"
+          onClick={onClose}
+          aria-label="Close navigation"
+          className="flex h-11 w-11 items-center justify-center rounded-pill text-muted transition hover:bg-wash hover:text-ink-2 focus:outline-none focus-visible:shadow-focus md:hidden"
+        >
+          <IconX className="h-5 w-5" />
+        </button>
       </div>
 
       {/* Nav */}
@@ -73,7 +111,7 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
                       end
                       onClick={onNavigate}
                       className={({ isActive }) =>
-                        `flex items-center gap-2.5 rounded-pill px-3 py-1.5 text-body transition ${
+                        `flex min-h-11 items-center gap-2.5 rounded-pill px-3 py-2 text-body transition ${
                           isActive
                             ? 'bg-wash font-medium text-ink-2'
                             : 'text-slateink hover:bg-surface-2 hover:text-ink-2'

@@ -21,11 +21,10 @@ export default {
         accent: 'var(--accent)',
         action: 'var(--action)',
         'action-ink': 'var(--action-ink)',
-        // Fixed data-signal colors (opacity-modifier capable).
-        good: '#16ca2e',
-        attention: '#ffa64d',
-        concern: '#f26052',
-        info: '#0099ff',
+        good: 'rgb(var(--good) / <alpha-value>)',
+        attention: 'rgb(var(--attention) / <alpha-value>)',
+        concern: 'rgb(var(--concern) / <alpha-value>)',
+        info: 'rgb(var(--info) / <alpha-value>)',
         signal: '#145aff',
       },
       fontFamily: {
@@ -33,7 +32,7 @@ export default {
         mono: ['"Roboto Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       fontSize: {
-        caption: ['10px', { lineHeight: '1.2', letterSpacing: '0.13px' }],
+        caption: ['12px', { lineHeight: '1.35', letterSpacing: '0.08px' }],
         body: ['14px', { lineHeight: '1.43', letterSpacing: '0.06px' }],
         'heading-sm': ['18px', { lineHeight: '1.4', letterSpacing: '-0.16px' }],
         heading: ['22px', { lineHeight: '1.25', letterSpacing: '-0.22px' }],
@@ -66,7 +65,7 @@ export default {
           from: { opacity: '0', transform: 'translateY(8px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
-        'slidefill': { from: { width: '0%' }, to: { width: '100%' } },
+        'slidefill': { from: { transform: 'scaleX(0)' }, to: { transform: 'scaleX(1)' } },
       },
       animation: {
         'fade-in': 'fade-in 0.2s ease-out',

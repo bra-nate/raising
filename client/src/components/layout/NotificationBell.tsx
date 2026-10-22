@@ -24,7 +24,9 @@ export function NotificationBell() {
         type="button"
         aria-label="Notifications"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-muted transition hover:bg-surface-2 hover:text-accent"
+        aria-expanded={open}
+        aria-controls="notifications-panel"
+        className="relative inline-flex h-11 w-11 items-center justify-center rounded-md text-muted transition hover:bg-surface-2 hover:text-accent focus:outline-none focus-visible:shadow-focus"
       >
         <IconBell className="h-5 w-5" />
         {unreadCount > 0 && (
@@ -35,7 +37,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-lg border border-hairline bg-surface shadow-lg">
+        <div id="notifications-panel" aria-label="Notifications" className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-lg border border-hairline bg-surface shadow-lg">
           <div className="flex items-center justify-between border-b border-hairline px-4 py-2">
             <span className="text-caption font-semibold text-ink-2">Notifications</span>
             {unreadCount > 0 && (

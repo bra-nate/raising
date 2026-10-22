@@ -21,7 +21,12 @@
   --ink-2: #14141e; /* strong headings / body */
   --slate: #374151; /* nav + UI labels */
   --muted: #696a72; /* secondary text */
-  --faint: #95959b; /* placeholders, metadata */
+  --faint: #5f616b; /* tertiary text — AA on canvas and surface */
+
+  --good: 8 122 32;
+  --attention: 138 75 0;
+  --concern: 180 35 24;
+  --info: 0 103 184;
 
   --accent: #145aff; /* highlighter blue — text & focus only */
   --accent-soft: rgba(20, 90, 255, 0.1);
@@ -48,7 +53,12 @@
   --ink-2: #e7eaf3;
   --slate: #b6bccb;
   --muted: #8b91a4;
-  --faint: #626a80;
+  --faint: #9da4b8;
+
+  --good: 101 217 120;
+  --attention: 255 194 102;
+  --concern: 255 138 126;
+  --info: 112 191 255;
 
   --accent: #5b8bff; /* lifted for contrast on navy */
   --accent-soft: rgba(91, 139, 255, 0.14);
@@ -82,6 +92,23 @@
   }
 }
 
+.skip-link {
+  position: fixed;
+  inset-block-start: 0.75rem;
+  inset-inline-start: 0.75rem;
+  z-index: 100;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(2px);
+}
+
 /* Hero radial wash — soft blue bloom (light) / deep navy glow (dark) */
 .hero-wash {
   background:
@@ -95,4 +122,15 @@
 /* Filled gradient — the single high-emphasis CTA fill (used sparingly). */
 .btn-gradient {
   background: linear-gradient(rgb(59, 130, 246) 0%, rgb(20, 90, 255) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

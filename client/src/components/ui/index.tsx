@@ -1,8 +1,11 @@
-import { ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes, ReactNode, useState } from 'react';
+import { ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes, ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { IconEye, IconEyeOff } from './icons';
+import { IconEye, IconEyeOff, IconX } from './icons';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
  * Button hierarchy (Relate discipline):
@@ -18,7 +21,7 @@ export function Button({
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
   const base =
-    'inline-flex items-center justify-center gap-1.5 rounded-btn text-body font-medium transition duration-150 focus:outline-none focus-visible:shadow-focus disabled:opacity-50 disabled:cursor-not-allowed';
+    'inline-flex min-h-11 items-center justify-center gap-1.5 rounded-btn text-body font-medium transition duration-150 focus:outline-none focus-visible:shadow-focus disabled:opacity-50 disabled:cursor-not-allowed';
   const variants: Record<Variant, string> = {
     primary: 'btn-gradient text-white px-5 py-2.5 font-semibold hover:brightness-105 active:brightness-95',
     secondary:
@@ -53,7 +56,7 @@ export function PasswordInput({ className = '', ...props }: Omit<InputHTMLAttrib
         onClick={() => setShown((v) => !v)}
         aria-label={shown ? 'Hide password' : 'Show password'}
         title={shown ? 'Hide password' : 'Show password'}
-        className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-input text-muted transition hover:text-ink-2 focus:outline-none focus-visible:shadow-focus"
+        className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-input text-muted transition hover:text-ink-2 focus:outline-none focus-visible:shadow-focus"
       >
         {shown ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
       </button>
@@ -153,27 +156,69 @@ export function Modal({
   description?: string;
   children: ReactNode;
 }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const titleId = useId();
+  const descriptionId = useId();
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!open || !dialog) return;
+    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialog.showModal();
+    return () => {
+      dialog.close();
+      const returnFocus = returnFocusRef.current;
+      requestAnimationFrame(() => returnFocus?.isConnected && returnFocus.focus());
+    };
+  }, [open]);
+
   if (!open) return null;
-  // Portal to <body> so `position: fixed` is not trapped by any ancestor
-  // that establishes a containing block (e.g. a transform on AppShell).
+
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-[2px] animate-fade-in"
-      onClick={onClose}
+    <dialog
+      ref={dialogRef}
+      aria-labelledby={titleId}
+      aria-describedby={description ? descriptionId : undefined}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Tab') return;
+        const focusable = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (!first || !last) return;
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }}
+      className="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-modal border border-hairline bg-surface p-7 text-ink shadow-elevated animate-scale-in"
     >
-      <div
-        className="my-8 max-h-[calc(100vh-4rem)] w-full max-w-md overflow-y-auto rounded-modal border border-hairline bg-surface p-7 shadow-elevated animate-scale-in"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-      >
-        <div className="mb-5">
-          <h2 className="text-heading-sm font-semibold text-ink-2">{title}</h2>
-          {description && <p className="mt-1 text-body text-muted">{description}</p>}
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <h2 id={titleId} className="text-heading-sm font-semibold text-ink-2">{title}</h2>
+          {description && <p id={descriptionId} className="mt-1 text-body text-muted">{description}</p>}
         </div>
-        {children}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={`Close ${title}`}
+          className="-mr-2 -mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-muted transition hover:bg-wash hover:text-ink-2 focus:outline-none focus-visible:shadow-focus"
+        >
+          <IconX className="h-5 w-5" />
+        </button>
       </div>
-    </div>,
+      {children}
+    </dialog>,
     document.body
   );
 }

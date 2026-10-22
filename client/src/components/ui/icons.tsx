@@ -133,6 +133,12 @@ export const IconMenu = (p: IconProps) => (
   </svg>
 );
 
+export const IconX = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </svg>
+);
+
 export const IconEye = (p: IconProps) => (
   <svg {...base} {...p}>
     <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z" />

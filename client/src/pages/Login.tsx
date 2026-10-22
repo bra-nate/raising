@@ -58,12 +58,13 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
   const [demoOpen, setDemoOpen] = useState(false);
   const [slide, setSlide] = useState(0);
+  const [carouselPaused, setCarouselPaused] = useState(false);
 
   useEffect(() => {
-    if (SLIDES.length < 2) return;
+    if (SLIDES.length < 2 || carouselPaused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const id = setInterval(() => setSlide((i) => (i + 1) % SLIDES.length), SLIDE_MS);
     return () => clearInterval(id);
-  }, []);
+  }, [carouselPaused]);
 
   async function signIn(withEmail: string, withPassword: string) {
     setError('');
@@ -94,7 +95,7 @@ export default function Login() {
   if (!loading && user) return <Navigate to={homePathForRole(user.role)} replace />;
 
   return (
-    <div className="flex min-h-screen bg-canvas">
+    <div className="flex min-h-dvh bg-canvas">
       {/* Left — brand, scripture and slide rail over the photo */}
       <div className="relative hidden w-1/2 shrink-0 p-3 lg:block">
         <div className="relative h-full overflow-hidden rounded-cardlg bg-slateink">
@@ -104,6 +105,7 @@ export default function Login() {
               src={s.src}
               alt=""
               fetchPriority={i === 0 ? 'high' : 'low'}
+              loading={i === 0 ? 'eager' : 'lazy'}
               className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
                 i === slide ? 'opacity-100' : 'opacity-0'
               }`}
@@ -120,21 +122,33 @@ export default function Login() {
             <figcaption className="mt-4 text-body text-white/70">{SLIDES[slide].ref}</figcaption>
 
             {SLIDES.length > 1 && (
-              <div className="mt-8 flex gap-2">
-                {SLIDES.map((s, i) => (
-                  <button
-                    key={s.src}
-                    type="button"
-                    onClick={() => setSlide(i)}
-                    aria-label={`Slide ${i + 1}`}
-                    aria-current={i === slide}
-                    className="h-1 flex-1 overflow-hidden rounded-full bg-white/25"
-                  >
-                    {i === slide && (
-                      <span key={slide} className="block h-full rounded-full bg-white animate-slidefill" />
-                    )}
-                  </button>
-                ))}
+              <div className="mt-6 flex items-center gap-2">
+                <div className="flex flex-1 gap-1" aria-label="Login images">
+                  {SLIDES.map((s, i) => (
+                    <button
+                      key={s.src}
+                      type="button"
+                      onClick={() => setSlide(i)}
+                      aria-label={`Show image ${i + 1} of ${SLIDES.length}`}
+                      aria-current={i === slide}
+                      className="flex h-11 flex-1 items-center"
+                    >
+                      <span className="block h-1 w-full overflow-hidden rounded-full bg-white/25">
+                        {i === slide && (
+                          <span key={slide} className="block h-full origin-left rounded-full bg-white animate-slidefill" />
+                        )}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCarouselPaused((paused) => !paused)}
+                  aria-label={carouselPaused ? 'Play image carousel' : 'Pause image carousel'}
+                  className="min-h-11 rounded-pill border border-white/30 px-3 text-caption font-medium text-white transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  {carouselPaused ? 'Play' : 'Pause'}
+                </button>
               </div>
             )}
           </figure>
@@ -173,7 +187,7 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            {error && <p className="text-body text-concern">{error}</p>}
+            {error && <p role="alert" className="text-body text-concern">{error}</p>}
             <Button type="submit" variant="primary" className="w-full" disabled={submitting}>
               {submitting ? 'Signing in…' : 'Sign in'}
             </Button>
