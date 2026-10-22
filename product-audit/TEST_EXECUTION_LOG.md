@@ -130,3 +130,13 @@ WP4 and WP5 continuation added normalized duplicate detection with audited overr
 | Full backend suite | PASS — 19 files and 162 tests |
 | `pnpm build` | PASS — server and client production builds; 133 client modules |
 | `git diff --check` | PASS |
+
+WP6 added capped server pagination, exact roster search/domain filters, stable ordering and metadata, URL-backed client state, inspect/return restoration, and the first client test command.
+
+| Check | Result |
+|---|---|
+| Full backend suite | PASS — 21 files and 169 tests |
+| Client suite | PASS — 1 file and 3 tests |
+| Server and client production builds | PASS — 134 client modules |
+| `git diff --check` | PASS |
+| Remaining certification | Synthetic-volume performance budgets and Playwright cross-role journeys |

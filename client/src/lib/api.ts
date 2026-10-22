@@ -227,8 +227,19 @@ export async function deactivateUser(id: string): Promise<User> {
 }
 
 // ── Members ───────────────────────────────────
-export async function listMembers(): Promise<ApiList<Member>> {
-  const { data } = await api.get('/members');
+export interface MemberListParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  leader?: string;
+  group?: string;
+  status?: string;
+  silence?: string;
+  sort?: string;
+}
+
+export async function listMembers(params?: MemberListParams): Promise<ApiList<Member>> {
+  const { data } = await api.get('/members', { params });
   return data;
 }
 
@@ -338,8 +349,17 @@ export async function updateSetting(key: string, value: string): Promise<{ key: 
 }
 
 // ── First-Timers ──────────────────────────────
-export async function listFirstTimers(): Promise<ApiList<FirstTimer>> {
-  const { data } = await api.get('/first-timers');
+export interface FirstTimerListParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  status?: string;
+  assignee?: string;
+  sort?: string;
+}
+
+export async function listFirstTimers(params?: FirstTimerListParams): Promise<ApiList<FirstTimer>> {
+  const { data } = await api.get('/first-timers', { params });
   return data;
 }
 

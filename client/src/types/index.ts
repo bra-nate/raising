@@ -255,6 +255,15 @@ export interface Setting {
 export interface ApiList<T> {
   data: T[];
   total: number;
+  count?: number;
+  page?: number;
+  pageSize?: number;
+  pageCount?: number;
+  facets?: {
+    leaders?: string[];
+    groups?: string[];
+    assignees?: string[];
+  };
 }
 
 export interface PastorStats {

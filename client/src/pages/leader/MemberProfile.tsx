@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, Card } from '../../components/ui';
 import { CasesPanel } from '../../components/cases/CasesPanel';
@@ -12,6 +12,8 @@ import type { Member, MemberReport } from '../../types';
 
 export default function LeaderMemberProfile() {
   const { id = '' } = useParams();
+  const location = useLocation();
+  const membersPath = (location.state as { returnTo?: string } | null)?.returnTo ?? '/leader/members';
   const [member, setMember] = useState<Member | null>(null);
   const [reports, setReports] = useState<MemberReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export default function LeaderMemberProfile() {
 
   if (loading) {
     return (
-      <AppShell title="Member" back={{ to: '/leader/members', label: 'My Members' }}>
+      <AppShell title="Member" back={{ to: membersPath, label: 'My Members' }}>
         <div className="h-40 animate-pulse rounded-card border border-hairline bg-surface/60" />
       </AppShell>
     );
@@ -46,7 +48,7 @@ export default function LeaderMemberProfile() {
 
   if (error || !member) {
     return (
-      <AppShell title="Member" back={{ to: '/leader/members', label: 'My Members' }}>
+      <AppShell title="Member" back={{ to: membersPath, label: 'My Members' }}>
         <p className="text-body text-concern">{error || 'Not found.'}</p>
       </AppShell>
     );
@@ -58,7 +60,7 @@ export default function LeaderMemberProfile() {
     <AppShell
       title={fullName(member)}
       subtitle={member.group?.name}
-      back={{ to: '/leader/members', label: 'My Members' }}
+      back={{ to: membersPath, label: 'My Members' }}
       actions={
         <>
           <Button onClick={() => setEditOpen(true)}>Edit member</Button>

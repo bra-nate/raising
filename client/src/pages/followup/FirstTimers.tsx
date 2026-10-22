@@ -1,14 +1,14 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { FormEvent, useEffect, useState } from 'react';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, Field, Input, Modal, SkeletonRows } from '../../components/ui';
 import {
   FirstTimerFilters,
-  applyFirstTimerFilters,
   emptyFirstTimerFilters,
   type FirstTimerFilterState,
 } from '../../components/filters/FirstTimerFilters';
 import { IconPlus, IconUpload } from '../../components/ui/icons';
+import { Pagination } from '../../components/Pagination';
 import {
   createFirstTimer,
   listFirstTimers,
@@ -20,30 +20,60 @@ import { relativeDate } from '../../lib/utils';
 import type { FirstTimer } from '../../types';
 
 export default function FollowUpFirstTimers() {
+  const pageSize = 25;
+  const location = useLocation();
+  const [params, setParams] = useSearchParams();
   const [items, setItems] = useState<FirstTimer[]>([]);
+  const [assignees, setAssignees] = useState<string[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filters, setFilters] = useState<FirstTimerFilterState>(emptyFirstTimerFilters);
+  const filters: FirstTimerFilterState = {
+    ...emptyFirstTimerFilters,
+    search: params.get('search') || '',
+    status: (params.get('status') as FirstTimerFilterState['status']) || 'all',
+    assignee: params.get('assignee') || 'all',
+    sort: (params.get('sort') as FirstTimerFilterState['sort']) || 'visitDate',
+  };
+  const page = Math.max(1, Number(params.get('page')) || 1);
+  const query = params.toString();
   const [showAdd, setShowAdd] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
 
   async function reload() {
-    const { data } = await listFirstTimers();
+    const { data, total: nextTotal, facets } = await listFirstTimers({ page, pageSize, ...filters });
     setItems(data);
+    setAssignees(facets?.assignees ?? []);
+    setTotal(nextTotal);
+    setError('');
   }
 
   useEffect(() => {
+    setLoading(true);
     reload()
       .catch(() => setError('Could not load first-timers.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [query]);
 
-  const filtered = useMemo(() => applyFirstTimerFilters(items, filters), [items, filters]);
+  function updateFilters(next: FirstTimerFilterState) {
+    const search = new URLSearchParams();
+    for (const [key, value] of Object.entries(next)) {
+      if (value && value !== 'all' && value !== emptyFirstTimerFilters[key as keyof FirstTimerFilterState]) search.set(key, value);
+    }
+    setParams(search, { replace: true });
+  }
+
+  function changePage(nextPage: number) {
+    const next = new URLSearchParams(params);
+    if (nextPage === 1) next.delete('page');
+    else next.set('page', String(nextPage));
+    setParams(next);
+  }
 
   return (
     <AppShell
       title="First-Timers"
-      subtitle={loading ? undefined : `${filtered.length} of ${items.length} shown`}
+      subtitle={loading ? undefined : `${total} first-timer${total === 1 ? '' : 's'}`}
       actions={
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => setShowUpload(true)}>
@@ -57,7 +87,7 @@ export default function FollowUpFirstTimers() {
         </div>
       }
     >
-      <FirstTimerFilters items={items} value={filters} onChange={setFilters} />
+      <FirstTimerFilters items={items} assigneeOptions={assignees} value={filters} onChange={updateFilters} />
 
       <div className="overflow-hidden rounded-card border border-hairline bg-surface shadow-card">
         {loading ? (
@@ -69,12 +99,13 @@ export default function FollowUpFirstTimers() {
             <p className="text-body font-medium text-ink-2">No first-timers yet</p>
             <p className="mt-1 text-caption text-faint">Upload a meeting list or add one to get started.</p>
           </div>
-        ) : filtered.length === 0 ? (
+        ) : items.length === 0 ? (
           <div className="p-12 text-center">
             <p className="text-body font-medium text-ink-2">No first-timers match</p>
             <p className="mt-1 text-caption text-faint">Try clearing a filter or search term.</p>
           </div>
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left">
               <thead>
@@ -87,12 +118,12 @@ export default function FollowUpFirstTimers() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((f) => {
+                {items.map((f) => {
                   const s = ftStatusMeta[f.status];
                   return (
                     <tr key={f.id} className="border-b border-hairline last:border-0 transition hover:bg-surface-2">
                       <td className="px-5 py-3">
-                        <Link to={`/followup/first-timers/${f.id}`} className="text-body font-medium text-ink-2 hover:text-accent">
+                        <Link to={`/followup/first-timers/${f.id}`} state={{ returnTo: `${location.pathname}${location.search}` }} className="text-body font-medium text-ink-2 hover:text-accent">
                           {f.firstName} {f.lastName}
                         </Link>
                       </td>
@@ -108,6 +139,8 @@ export default function FollowUpFirstTimers() {
               </tbody>
             </table>
           </div>
+          <Pagination page={page} pageSize={pageSize} total={total} onPageChange={changePage} />
+          </>
         )}
       </div>
 

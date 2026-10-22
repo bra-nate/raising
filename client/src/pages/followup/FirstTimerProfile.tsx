@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, Card, Field, Input, Modal, Select, SkeletonRows } from '../../components/ui';
 import { IconPhone } from '../../components/ui/icons';
@@ -12,6 +12,8 @@ const OUTCOMES: CallOutcome[] = ['answered', 'no_answer', 'callback_requested', 
 
 export default function FollowUpFirstTimerProfile() {
   const { id = '' } = useParams();
+  const location = useLocation();
+  const firstTimersPath = (location.state as { returnTo?: string } | null)?.returnTo ?? '/followup/first-timers';
   const [ft, setFt] = useState<FirstTimer | null>(null);
   const [reports, setReports] = useState<FirstTimerReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export default function FollowUpFirstTimerProfile() {
     );
   if (error || !ft)
     return (
-      <AppShell title="First-timer" back={{ to: '/followup/first-timers', label: 'First-Timers' }}>
+      <AppShell title="First-timer" back={{ to: firstTimersPath, label: 'First-Timers' }}>
         <div className="p-8 text-body text-concern">{error || 'Not found.'}</div>
       </AppShell>
     );
@@ -49,7 +51,7 @@ export default function FollowUpFirstTimerProfile() {
     <AppShell
       title={`${ft.firstName} ${ft.lastName}`}
       subtitle={ft.serviceName ? `Joined at ${ft.serviceName}` : undefined}
-      back={{ to: '/followup/first-timers', label: 'First-Timers' }}
+      back={{ to: firstTimersPath, label: 'First-Timers' }}
       actions={
         <Button variant="primary" onClick={() => setShowLog(true)}>
           <IconPhone className="h-4 w-4" />

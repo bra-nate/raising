@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, Card, Field, Modal, Select } from '../../components/ui';
 import { CasesPanel } from '../../components/cases/CasesPanel';
@@ -14,6 +14,8 @@ import type { FirstTimerReport, Group, Member, MemberReport } from '../../types'
 
 export default function PastorMemberProfile() {
   const { id = '' } = useParams();
+  const location = useLocation();
+  const membersPath = (location.state as { returnTo?: string } | null)?.returnTo ?? '/pastor/members';
   const [member, setMember] = useState<Member | null>(null);
   const [reports, setReports] = useState<MemberReport[]>([]);
   const [canModify, setCanModify] = useState(false);
@@ -66,7 +68,7 @@ export default function PastorMemberProfile() {
 
   if (loading) {
     return (
-      <AppShell title="Member" back={{ to: '/pastor/members', label: 'Members' }}>
+      <AppShell title="Member" back={{ to: membersPath, label: 'Members' }}>
         <div className="h-40 animate-pulse rounded-card border border-hairline bg-surface/60" />
       </AppShell>
     );
@@ -74,7 +76,7 @@ export default function PastorMemberProfile() {
 
   if (error || !member) {
     return (
-      <AppShell title="Member" back={{ to: '/pastor/members', label: 'Members' }}>
+      <AppShell title="Member" back={{ to: membersPath, label: 'Members' }}>
         <p className="text-body text-concern">{error || 'Not found.'}</p>
       </AppShell>
     );
@@ -86,7 +88,7 @@ export default function PastorMemberProfile() {
     <AppShell
       title={fullName(member)}
       subtitle={member.assignedLeader?.fullName ? `Led by ${member.assignedLeader.fullName}` : undefined}
-      back={{ to: '/pastor/members', label: 'Members' }}
+      back={{ to: membersPath, label: 'Members' }}
       actions={
         <>
           <Button onClick={() => setEditOpen(true)}>Edit member</Button>

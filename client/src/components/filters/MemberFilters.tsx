@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { FilterBar } from './FilterBar';
-import { fullName } from '../../lib/utils';
 import type { Member, SilenceStatus, StatusTag } from '../../types';
 
 export type MemberFilterState = {
@@ -21,30 +20,6 @@ export const emptyMemberFilters: MemberFilterState = {
   sort: 'silence',
 };
 
-const SILENCE_RANK: Record<string, number> = { significant: 0, overdue: 1, ok: 2 };
-
-/** Filter + sort a member list. Shared so pastor and leader views never drift apart. */
-export function applyMemberFilters(members: Member[], f: MemberFilterState): Member[] {
-  const q = f.search.trim().toLowerCase();
-  const list = members.filter((m) => {
-    if (f.leader !== 'all' && m.assignedLeader?.fullName !== f.leader) return false;
-    if (f.group !== 'all' && m.group?.name !== f.group) return false;
-    if (f.status !== 'all' && m.latestStatus !== f.status) return false;
-    if (f.silence !== 'all' && (m.silence ?? 'ok') !== f.silence) return false;
-    if (q && !fullName(m).toLowerCase().includes(q)) return false;
-    return true;
-  });
-
-  if (f.sort === 'name') list.sort((a, b) => fullName(a).localeCompare(fullName(b)));
-  else if (f.sort === 'silence')
-    list.sort((a, b) => SILENCE_RANK[a.silence ?? 'ok'] - SILENCE_RANK[b.silence ?? 'ok']);
-  else
-    list.sort(
-      (a, b) => new Date(a.lastReportDate ?? 0).getTime() - new Date(b.lastReportDate ?? 0).getTime()
-    );
-  return list;
-}
-
 const names = <T,>(items: T[], pick: (t: T) => string | undefined) =>
   Array.from(new Set(items.map(pick).filter(Boolean))) as string[];
 
@@ -54,15 +29,25 @@ const names = <T,>(items: T[], pick: (t: T) => string | undefined) =>
  */
 export function MemberFilters({
   members,
+  leaderOptions,
+  groupOptions,
   value,
   onChange,
 }: {
   members: Member[];
+  leaderOptions?: string[];
+  groupOptions?: string[];
   value: MemberFilterState;
   onChange: (next: MemberFilterState) => void;
 }) {
-  const leaders = useMemo(() => names(members, (m) => m.assignedLeader?.fullName), [members]);
-  const groups = useMemo(() => names(members, (m) => m.group?.name), [members]);
+  const leaders = useMemo(() => {
+    const options = leaderOptions ?? names(members, (m) => m.assignedLeader?.fullName);
+    return value.leader !== 'all' && !options.includes(value.leader) ? [value.leader, ...options] : options;
+  }, [leaderOptions, members, value.leader]);
+  const groups = useMemo(() => {
+    const options = groupOptions ?? names(members, (m) => m.group?.name);
+    return value.group !== 'all' && !options.includes(value.group) ? [value.group, ...options] : options;
+  }, [groupOptions, members, value.group]);
   const set = <K extends keyof MemberFilterState>(key: K, v: MemberFilterState[K]) =>
     onChange({ ...value, [key]: v });
 
@@ -82,9 +67,7 @@ export function MemberFilters({
           label: 'Filter by group',
           value: value.group,
           onChange: (v) => set('group', v),
-          hidden:
-            value.group === 'all' &&
-            (groups.length === 0 || (groups.length === 1 && members.every((member) => member.group))),
+          hidden: value.group === 'all' && groups.length === 0,
           options: [{ value: 'all', label: 'All groups' }, ...groups.map((g) => ({ value: g, label: g }))],
         },
         {

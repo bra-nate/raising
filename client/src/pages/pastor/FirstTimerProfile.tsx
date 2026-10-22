@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, Card, Field, Modal, Select, SkeletonRows } from '../../components/ui';
 import { convertFirstTimer, getFirstTimer, listFirstTimerReports, listUsers } from '../../lib/api';
@@ -10,6 +10,8 @@ import type { FirstTimer, FirstTimerReport, User } from '../../types';
 
 export default function PastorFirstTimerProfile() {
   const { id = '' } = useParams();
+  const location = useLocation();
+  const firstTimersPath = (location.state as { returnTo?: string } | null)?.returnTo ?? '/pastor/first-timers';
   const navigate = useNavigate();
   const [ft, setFt] = useState<FirstTimer | null>(null);
   const [reports, setReports] = useState<FirstTimerReport[]>([]);
@@ -36,7 +38,7 @@ export default function PastorFirstTimerProfile() {
     );
   if (error || !ft)
     return (
-      <AppShell title="First-timer" back={{ to: '/pastor/first-timers', label: 'First-Timers' }}>
+      <AppShell title="First-timer" back={{ to: firstTimersPath, label: 'First-Timers' }}>
         <div className="p-8 text-body text-concern">{error || 'Not found.'}</div>
       </AppShell>
     );
@@ -48,7 +50,7 @@ export default function PastorFirstTimerProfile() {
     <AppShell
       title={`${ft.firstName} ${ft.lastName}`}
       subtitle={ft.serviceName ? `Joined at ${ft.serviceName}` : undefined}
-      back={{ to: '/pastor/first-timers', label: 'First-Timers' }}
+      back={{ to: firstTimersPath, label: 'First-Timers' }}
       actions={
         isConverted && ft.convertedMemberId ? (
           <Button variant="secondary" onClick={() => navigate(`/pastor/members/${ft.convertedMemberId}`)}>

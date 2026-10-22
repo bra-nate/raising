@@ -1,9 +1,10 @@
-import { StatusTag } from '@prisma/client';
+import { Prisma, StatusTag } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { AppError } from '../lib/errors';
 import { JwtPayload } from '../lib/jwt';
 import { writeLog } from './activity-log.service';
 import { settingsService } from './settings.service';
+import { listMetadata, paginationFromQuery } from '../lib/listQuery';
 
 export type SilenceStatus = 'ok' | 'overdue' | 'significant';
 
@@ -25,30 +26,13 @@ const MEMBER_INCLUDE = {
   group: { select: { name: true } },
   convertedFromFirstTimer: { select: { visitDate: true } },
   reports: {
-    orderBy: { createdAt: 'desc' as const },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: 1,
     select: { statusTag: true },
   },
-} as const;
+} satisfies Prisma.MemberInclude;
 
-type MemberRow = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  phone: string | null;
-  email: string | null;
-  address: string | null;
-  assignedLeaderId: string;
-  groupId: string | null;
-  lastReportDate: Date | null;
-  isActive: boolean;
-  convertedFromFirstTimerId: string | null;
-  createdAt: Date;
-  assignedLeader: { fullName: string };
-  group: { name: string } | null;
-  convertedFromFirstTimer: { visitDate: Date } | null;
-  reports: { statusTag: StatusTag }[];
-};
+type MemberRow = Prisma.MemberGetPayload<{ include: typeof MEMBER_INCLUDE }>;
 
 function shape(m: MemberRow, thresholdDays: number) {
   const { reports, ...rest } = m;
@@ -63,15 +47,94 @@ function shape(m: MemberRow, thresholdDays: number) {
  * Leader → own active members only. Pastor → all members.
  * Query scoping is enforced here; query params are never trusted for scoping.
  */
-async function listMembers(user: JwtPayload) {
+const MEMBER_SORTS = ['silence', 'name', 'lastReport'] as const;
+const SILENCE_STATUSES: SilenceStatus[] = ['ok', 'overdue', 'significant'];
+
+async function memberIdsWithLatestStatus(status: StatusTag): Promise<string[]> {
+  const rows = await prisma.$queryRaw<{ memberId: string }[]>(Prisma.sql`
+    SELECT latest."memberId"
+    FROM (
+      SELECT DISTINCT ON ("memberId") "memberId", "statusTag"
+      FROM "member_reports"
+      ORDER BY "memberId", "createdAt" DESC, "id" DESC
+    ) AS latest
+    WHERE latest."statusTag"::text = ${status}
+  `);
+  return rows.map((row) => row.memberId);
+}
+
+async function listMembers(user: JwtPayload, query: Record<string, unknown> = {}) {
   const thresholdDays = await settingsService.getNumber('reportThresholdDays', 14);
-  const rows = (await prisma.member.findMany({
-    where: user.role === 'leader' ? { assignedLeaderId: user.id, isActive: true } : {},
-    include: MEMBER_INCLUDE,
-    orderBy: { createdAt: 'desc' },
-  })) as MemberRow[];
-  const data = rows.map((m) => shape(m, thresholdDays));
-  return { data, total: data.length };
+  const pagination = paginationFromQuery(query);
+  const search = typeof query.search === 'string' ? query.search.trim() : '';
+  const leader = typeof query.leader === 'string' ? query.leader.trim() : '';
+  const group = typeof query.group === 'string' ? query.group.trim() : '';
+  const status = typeof query.status === 'string' && query.status !== 'all' ? query.status : '';
+  const silence = typeof query.silence === 'string' && query.silence !== 'all' ? query.silence : '';
+  const sort = typeof query.sort === 'string' ? query.sort : 'silence';
+
+  if (status && !Object.values(StatusTag).includes(status as StatusTag)) {
+    throw new AppError(400, 'Invalid status');
+  }
+  if (silence && !SILENCE_STATUSES.includes(silence as SilenceStatus)) {
+    throw new AppError(400, 'Invalid silence');
+  }
+  if (!MEMBER_SORTS.includes(sort as (typeof MEMBER_SORTS)[number])) {
+    throw new AppError(400, 'Invalid sort');
+  }
+
+  const where: Prisma.MemberWhereInput =
+    user.role === 'leader' ? { assignedLeaderId: user.id, isActive: true } : {};
+  const facetWhere: Prisma.MemberWhereInput = { ...where };
+  if (search) where.AND = search.split(/\s+/).map((term) => ({
+    OR: [
+      { firstName: { contains: term, mode: 'insensitive' } },
+      { lastName: { contains: term, mode: 'insensitive' } },
+    ],
+  }));
+  if (leader && leader !== 'all') where.assignedLeader = { fullName: leader };
+  if (group && group !== 'all') where.group = { name: group };
+  if (status) where.id = { in: await memberIdsWithLatestStatus(status as StatusTag) };
+
+  const overdueAt = new Date(Date.now() - thresholdDays * 86_400_000);
+  const significantAt = new Date(Date.now() - thresholdDays * 2 * 86_400_000);
+  if (silence === 'ok') where.lastReportDate = { gte: overdueAt };
+  if (silence === 'overdue') {
+    const existing = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
+    where.AND = [...existing,
+      { OR: [{ lastReportDate: null }, { lastReportDate: { lt: overdueAt, gte: significantAt } }] },
+    ];
+  }
+  if (silence === 'significant') where.lastReportDate = { lt: significantAt };
+
+  const orderBy: Prisma.MemberOrderByWithRelationInput[] =
+    sort === 'name'
+      ? [{ firstName: 'asc' }, { lastName: 'asc' }, { id: 'asc' }]
+      : [{ lastReportDate: 'asc' }, { firstName: 'asc' }, { id: 'asc' }];
+
+  const [rows, total, facetRows] = await Promise.all([
+    prisma.member.findMany({
+      where,
+      include: MEMBER_INCLUDE,
+      orderBy,
+      ...(pagination ? { skip: pagination.skip, take: pagination.pageSize } : {}),
+    }),
+    prisma.member.count({ where }),
+    pagination
+      ? prisma.member.findMany({
+          where: facetWhere,
+          select: { assignedLeader: { select: { fullName: true } }, group: { select: { name: true } } },
+        })
+      : Promise.resolve([]),
+  ]);
+  const data = (rows as MemberRow[]).map((m) => shape(m, thresholdDays));
+  const facets = pagination
+    ? {
+        leaders: [...new Set(facetRows.map((row) => row.assignedLeader.fullName))].sort(),
+        groups: [...new Set(facetRows.map((row) => row.group?.name).filter((name): name is string => Boolean(name)))].sort(),
+      }
+    : undefined;
+  return { data, ...listMetadata(total, data.length, pagination), facets };
 }
 
 async function getMember(user: JwtPayload, id: string) {

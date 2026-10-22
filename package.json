@@ -11,8 +11,9 @@
     "test:db:up": "docker compose -f compose.test.yaml up -d --wait",
     "test:db:migrate": "DATABASE_URL=postgresql://raising:raising_test@localhost:55432/raising_test pnpm --filter raising-server exec prisma migrate deploy",
     "test:server": "DATABASE_URL=postgresql://raising:raising_test@localhost:55432/raising_test pnpm --filter raising-server test",
+    "test:client": "pnpm --filter raising-client test",
     "test:db:down": "docker compose -f compose.test.yaml down",
-    "test": "pnpm test:db:up && pnpm test:db:migrate && pnpm test:server"
+    "test": "pnpm test:db:up && pnpm test:db:migrate && pnpm test:server && pnpm test:client"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

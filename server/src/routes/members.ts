@@ -12,7 +12,7 @@ router.get(
   '/',
   requireRole('pastor', 'leader'),
   asyncHandler(async (req, res) => {
-    const result = await membersService.listMembers(req.user!);
+    const result = await membersService.listMembers(req.user!, req.query);
     res.json(result);
   })
 );

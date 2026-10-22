@@ -182,6 +182,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-012 — Large roster endpoints are unbounded
 
+- **Remediation status (2026-10-22):** Code fixed. Member and first-timer roster screens request capped pages with server-side search/domain filters and stable sorting; URL state survives deep links and inspect/return. Synthetic-volume p95, payload, render, and mobile budgets remain to be measured.
 - **Type:** Performance / operability
 - **Priority:** P2
 - **Persona / journey:** Pastor, leader, follow-up roles; list and search
@@ -196,6 +197,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-013 — No client unit, integration, or E2E suite
 
+- **Remediation status (2026-10-22):** Partially fixed. The client now has a Vitest command and three passing CSV-boundary tests. Component coverage, Playwright cross-role journeys, and CI failure artifacts remain open.
 - **Type:** Test coverage
 - **Priority:** P2
 - **Persona / journey:** All roles

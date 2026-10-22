@@ -13,7 +13,7 @@ router.get(
   '/',
   requireRole(...FOLLOWUP),
   asyncHandler(async (req, res) => {
-    res.json(await firstTimersService.listFirstTimers(req.user!));
+    res.json(await firstTimersService.listFirstTimers(req.user!, req.query));
   })
 );
 

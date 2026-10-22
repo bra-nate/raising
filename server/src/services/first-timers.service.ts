@@ -1,28 +1,79 @@
 import { randomUUID } from 'node:crypto';
+import { FirstTimerStatus, Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { AppError } from '../lib/errors';
 import { JwtPayload } from '../lib/jwt';
 import { writeLog } from './activity-log.service';
 import { notificationsService } from './notifications.service';
 import { settingsService } from './settings.service';
+import { listMetadata, paginationFromQuery } from '../lib/listQuery';
 
 const FT_INCLUDE = {
   assignedTo: { select: { fullName: true } },
 } as const;
 
 // Team member sees own + the unassigned pool. Team lead / pastor see all active.
-async function listFirstTimers(user: JwtPayload) {
-  const where =
+const FIRST_TIMER_SORTS = ['visitDate', 'name', 'status'] as const;
+
+async function listFirstTimers(user: JwtPayload, query: Record<string, unknown> = {}) {
+  const pagination = paginationFromQuery(query);
+  const search = typeof query.search === 'string' ? query.search.trim() : '';
+  const status = typeof query.status === 'string' && query.status !== 'all' ? query.status : '';
+  const assignee = typeof query.assignee === 'string' ? query.assignee.trim() : '';
+  const sort = typeof query.sort === 'string' ? query.sort : 'visitDate';
+  if (status && !Object.values(FirstTimerStatus).includes(status as FirstTimerStatus)) {
+    throw new AppError(400, 'Invalid status');
+  }
+  if (!FIRST_TIMER_SORTS.includes(sort as (typeof FIRST_TIMER_SORTS)[number])) {
+    throw new AppError(400, 'Invalid sort');
+  }
+
+  const where: Prisma.FirstTimerWhereInput =
     user.role === 'followup_team_member'
       ? { isActive: true, OR: [{ assignedToId: user.id }, { assignedToId: null }] }
       : { isActive: true };
-  const rows = await prisma.firstTimer.findMany({
-    where,
-    include: FT_INCLUDE,
-    // pending first, then most recent meeting
-    orderBy: [{ status: 'asc' }, { visitDate: 'desc' }],
-  });
-  return { data: rows, total: rows.length };
+  const facetWhere: Prisma.FirstTimerWhereInput = { ...where };
+  if (search) {
+    const nameSearch = search.split(/\s+/).map<Prisma.FirstTimerWhereInput>((term) => ({
+      OR: [
+        { firstName: { contains: term, mode: 'insensitive' } },
+        { lastName: { contains: term, mode: 'insensitive' } },
+      ],
+    }));
+    where.AND = [...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []), ...nameSearch];
+  }
+  if (status) where.status = status as FirstTimerStatus;
+  if (assignee === 'unassigned') where.assignedToId = null;
+  else if (assignee && assignee !== 'all') where.assignedTo = { fullName: assignee };
+
+  const orderBy: Prisma.FirstTimerOrderByWithRelationInput[] =
+    sort === 'name'
+      ? [{ firstName: 'asc' }, { lastName: 'asc' }, { id: 'asc' }]
+      : sort === 'status'
+        ? [{ status: 'asc' }, { visitDate: 'desc' }, { id: 'asc' }]
+        : [{ visitDate: 'desc' }, { id: 'asc' }];
+  const [rows, total, facetRows] = await Promise.all([
+    prisma.firstTimer.findMany({
+      where,
+      include: FT_INCLUDE,
+      orderBy,
+      ...(pagination ? { skip: pagination.skip, take: pagination.pageSize } : {}),
+    }),
+    prisma.firstTimer.count({ where }),
+    pagination
+      ? prisma.firstTimer.findMany({
+          where: facetWhere,
+          distinct: ['assignedToId'],
+          select: { assignedTo: { select: { fullName: true } } },
+        })
+      : Promise.resolve([]),
+  ]);
+  const facets = pagination
+    ? {
+        assignees: [...new Set(facetRows.map((row) => row.assignedTo?.fullName).filter((name): name is string => Boolean(name)))].sort(),
+      }
+    : undefined;
+  return { data: rows, ...listMetadata(total, rows.length, pagination), facets };
 }
 
 // Team member may view own or a claimable (unassigned) record; never another's.

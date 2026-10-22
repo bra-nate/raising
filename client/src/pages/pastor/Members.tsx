@@ -1,55 +1,70 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, SkeletonRows } from '../../components/ui';
 import {
   MemberFilters,
-  applyMemberFilters,
   emptyMemberFilters,
   type MemberFilterState,
 } from '../../components/filters/MemberFilters';
 import { IconDownload, IconPlus } from '../../components/ui/icons';
+import { Pagination } from '../../components/Pagination';
 import { exportMembersCsv, listMembers } from '../../lib/api';
 import { fullName, relativeDate, silenceMeta, statusMeta } from '../../lib/utils';
 import type { Member, SilenceStatus, StatusTag } from '../../types';
 
 export default function PastorMembers() {
+  const pageSize = 25;
   const navigate = useNavigate();
+  const location = useLocation();
   const [params, setParams] = useSearchParams();
   const [members, setMembers] = useState<Member[]>([]);
+  const [facets, setFacets] = useState<{ leaders?: string[]; groups?: string[] }>({});
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filters, setFilters] = useState<MemberFilterState>({
+  const filters: MemberFilterState = {
     ...emptyMemberFilters,
+    search: params.get('search') || '',
     leader: params.get('leader') || 'all',
+    group: params.get('group') || 'all',
     status: (params.get('status') as StatusTag) || 'all',
     silence: (params.get('silence') as SilenceStatus) || 'all',
-  });
+    sort: (params.get('sort') as MemberFilterState['sort']) || 'silence',
+  };
+  const page = Math.max(1, Number(params.get('page')) || 1);
+  const query = params.toString();
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
     (async () => {
       try {
-        const { data } = await listMembers();
+        const { data, total: nextTotal, facets: nextFacets } = await listMembers({ page, pageSize, ...filters });
         setMembers(data);
+        setFacets(nextFacets ?? {});
+        setTotal(nextTotal);
+        setError('');
       } catch {
         setError('Could not load members.');
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [query]);
 
-  // Keep status/silence in the URL so dashboard stat cards can deep-link here.
-  useEffect(() => {
-    const next = new URLSearchParams();
-    if (filters.leader !== 'all') next.set('leader', filters.leader);
-    if (filters.status !== 'all') next.set('status', filters.status);
-    if (filters.silence !== 'all') next.set('silence', filters.silence);
-    setParams(next, { replace: true });
-  }, [filters.leader, filters.status, filters.silence, setParams]);
+  function updateFilters(next: MemberFilterState) {
+    const search = new URLSearchParams();
+    for (const [key, value] of Object.entries(next)) if (value && value !== 'all' && value !== emptyMemberFilters[key as keyof MemberFilterState]) search.set(key, value);
+    setParams(search, { replace: true });
+  }
 
-  const filtered = useMemo(() => applyMemberFilters(members, filters), [members, filters]);
+  function changePage(nextPage: number) {
+    const next = new URLSearchParams(params);
+    if (nextPage === 1) next.delete('page');
+    else next.set('page', String(nextPage));
+    setParams(next);
+  }
 
   async function handleExport() {
     setExporting(true);
@@ -71,7 +86,7 @@ export default function PastorMembers() {
   return (
     <AppShell
       title="Members"
-      subtitle={loading ? undefined : `${filtered.length} of ${members.length} shown`}
+      subtitle={loading ? undefined : `${total} member${total === 1 ? '' : 's'}`}
       back={{ to: '/pastor', label: 'Dashboard' }}
       actions={
         <div className="flex items-center gap-2">
@@ -86,61 +101,58 @@ export default function PastorMembers() {
         </div>
       }
     >
-      <MemberFilters members={members} value={filters} onChange={setFilters} />
+      <MemberFilters members={members} leaderOptions={facets.leaders} groupOptions={facets.groups} value={filters} onChange={updateFilters} />
 
       <div className="overflow-hidden rounded-card border border-hairline bg-surface shadow-card">
         {loading ? (
           <SkeletonRows rows={6} />
         ) : error ? (
           <div className="p-8 text-body text-concern">{error}</div>
-        ) : filtered.length === 0 ? (
+        ) : members.length === 0 ? (
           <div className="p-12 text-center">
             <p className="text-body font-medium text-ink-2">No members match</p>
             <p className="mt-1 text-caption text-faint">Try clearing a filter or search term.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left">
-              <thead>
-                <tr className="border-b border-hairline text-caption uppercase tracking-wide text-faint">
-                  <th className="px-5 py-3 font-medium">Name</th>
-                  <th className="px-5 py-3 font-medium">Leader</th>
-                  <th className="px-5 py-3 font-medium">Group</th>
-                  <th className="px-5 py-3 font-medium">Latest status</th>
-                  <th className="px-5 py-3 font-medium">Last report</th>
-                  <th className="px-5 py-3 font-medium">Silence</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((m) => {
-                  const s = silenceMeta[m.silence ?? 'ok'];
-                  return (
-                    <tr key={m.id} className="border-b border-hairline last:border-0 transition hover:bg-surface-2">
-                      <td className="px-5 py-3">
-                        <Link to={`/pastor/members/${m.id}`} className="flex items-center gap-2">
-                          <span className={`h-2 w-2 shrink-0 rounded-full ${s.dot}`} />
-                          <span className="text-body font-medium text-ink-2 hover:text-accent">{fullName(m)}</span>
-                        </Link>
-                      </td>
-                      <td className="px-5 py-3 text-body text-muted">{m.assignedLeader?.fullName ?? '—'}</td>
-                      <td className="px-5 py-3 text-body text-muted">{m.group?.name ?? '—'}</td>
-                      <td className="px-5 py-3">
-                        {m.latestStatus ? (
-                          <Badge tone={statusMeta[m.latestStatus].tone}>{statusMeta[m.latestStatus].label}</Badge>
-                        ) : (
-                          <span className="text-caption text-faint">No reports</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-3 text-body text-muted">{relativeDate(m.lastReportDate)}</td>
-                      <td className="px-5 py-3">
-                        <Badge tone={s.tone}>{s.label}</Badge>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-left">
+                <thead>
+                  <tr className="border-b border-hairline text-caption uppercase tracking-wide text-faint">
+                    <th className="px-5 py-3 font-medium">Name</th>
+                    <th className="px-5 py-3 font-medium">Leader</th>
+                    <th className="px-5 py-3 font-medium">Group</th>
+                    <th className="px-5 py-3 font-medium">Latest status</th>
+                    <th className="px-5 py-3 font-medium">Last report</th>
+                    <th className="px-5 py-3 font-medium">Silence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {members.map((m) => {
+                    const s = silenceMeta[m.silence ?? 'ok'];
+                    return (
+                      <tr key={m.id} className="border-b border-hairline last:border-0 transition hover:bg-surface-2">
+                        <td className="px-5 py-3">
+                          <Link to={`/pastor/members/${m.id}`} state={{ returnTo: `${location.pathname}${location.search}` }} className="flex items-center gap-2">
+                            <span className={`h-2 w-2 shrink-0 rounded-full ${s.dot}`} />
+                            <span className="text-body font-medium text-ink-2 hover:text-accent">{fullName(m)}</span>
+                          </Link>
+                        </td>
+                        <td className="px-5 py-3 text-body text-muted">{m.assignedLeader?.fullName ?? '—'}</td>
+                        <td className="px-5 py-3 text-body text-muted">{m.group?.name ?? '—'}</td>
+                        <td className="px-5 py-3">
+                          {m.latestStatus ? <Badge tone={statusMeta[m.latestStatus].tone}>{statusMeta[m.latestStatus].label}</Badge> : <span className="text-caption text-faint">No reports</span>}
+                        </td>
+                        <td className="px-5 py-3 text-body text-muted">{relativeDate(m.lastReportDate)}</td>
+                        <td className="px-5 py-3"><Badge tone={s.tone}>{s.label}</Badge></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <Pagination page={page} pageSize={pageSize} total={total} onPageChange={changePage} />
+          </>
         )}
       </div>
     </AppShell>
