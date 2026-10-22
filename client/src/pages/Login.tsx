@@ -104,7 +104,6 @@ export default function Login() {
               key={s.src}
               src={s.src}
               alt=""
-              fetchPriority={i === 0 ? 'high' : 'low'}
               loading={i === 0 ? 'eager' : 'lazy'}
               className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
                 i === slide ? 'opacity-100' : 'opacity-0'
@@ -198,7 +197,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setDemoOpen(true)}
-                className="text-caption text-accent underline-offset-4 hover:underline"
+                className="inline-flex min-h-11 items-center px-3 text-caption text-accent underline-offset-4 hover:underline"
               >
                 Use a demo account
               </button>

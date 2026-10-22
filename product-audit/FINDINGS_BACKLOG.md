@@ -212,6 +212,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-014 — Development login emits a React DOM-prop console error
 
+- **Remediation status (2026-10-22):** Fixed in working tree by removing the optional unsupported image-priority prop; eager/lazy loading behavior remains.
 - **Type:** Runtime quality
 - **Priority:** P3
 - **Location:** `client/src/pages/Login.tsx:107`
@@ -221,6 +222,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-015 — Two mobile login controls miss the 44px target guideline
 
+- **Remediation status (2026-10-22):** Fixed in working tree. The shared input primitive now guarantees a 44px minimum height, which also sizes the password reveal control, and the demo trigger has a 44px interactive box.
 - **Type:** Accessibility / responsive usability
 - **Priority:** P3
 - **Location:** `client/src/pages/Login.tsx:198`, password reveal control
