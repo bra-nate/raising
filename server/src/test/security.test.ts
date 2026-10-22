@@ -248,6 +248,55 @@ describe('role guards on privileged routes', () => {
   });
 });
 
+describe('authorization uses current account state, not stale token claims', () => {
+  it('rejects an existing token immediately after deactivation', async () => {
+    const leader = await createUser({ role: 'leader' });
+    const token = auth(leader);
+    await prisma.user.update({ where: { id: leader.id }, data: { isActive: false } });
+
+    await request(app).get('/api/v1/settings').set('Authorization', token).expect(401);
+  });
+
+  it('removes privileges immediately after a role change', async () => {
+    const pastor = await createUser({ role: 'pastor' });
+    const token = auth(pastor);
+    await prisma.user.update({ where: { id: pastor.id }, data: { role: 'leader' } });
+
+    await request(app).get('/api/v1/users').set('Authorization', token).expect(403);
+  });
+
+  it('grants only the current role after a promotion', async () => {
+    const leader = await createUser({ role: 'leader' });
+    const token = auth(leader);
+    await prisma.user.update({ where: { id: leader.id }, data: { role: 'pastor' } });
+
+    await request(app).get('/api/v1/users').set('Authorization', token).expect(200);
+  });
+
+  it('gates an existing token immediately after an administrator reset', async () => {
+    const pastor = await createUser({ role: 'pastor' });
+    const leader = await createUser({ role: 'leader' });
+    const oldLeaderToken = auth(leader);
+
+    await request(app)
+      .patch(`/api/v1/users/${leader.id}/password`)
+      .set('Authorization', auth(pastor))
+      .send({ newPassword: 'replacement-123' })
+      .expect(200);
+
+    await request(app).get('/api/v1/members').set('Authorization', oldLeaderToken).expect(403);
+    await request(app).get('/api/v1/auth/me').set('Authorization', oldLeaderToken).expect(200);
+  });
+
+  it('rejects a validly signed token when the user no longer exists', async () => {
+    const user = await createUser({ role: 'leader' });
+    const token = auth(user);
+    await prisma.user.delete({ where: { id: user.id } });
+
+    await request(app).get('/api/v1/settings').set('Authorization', token).expect(401);
+  });
+});
+
 async function settingValue(key: string) {
   return (await prisma.setting.findUnique({ where: { key } }))?.value;
 }

@@ -33,11 +33,12 @@ describe('forced password change', () => {
       .send({ currentPassword: password, newPassword: 'chosen-by-me-1' });
     expect(changed.status).toBe(200);
 
-    // The fresh token clears the gate; the stale one still carries it.
+    // Authorization uses current database state, so both signed tokens now
+    // observe that the holder completed the required change.
     await seedSettings();
     const fresh = `Bearer ${changed.body.token}`;
     expect((await request(app).get('/api/v1/members').set('Authorization', fresh)).status).toBe(200);
-    expect((await request(app).get('/api/v1/members').set('Authorization', gated)).status).toBe(403);
+    expect((await request(app).get('/api/v1/members').set('Authorization', gated)).status).toBe(200);
   });
 
   it('is set by a pastor-issued reset and by account creation', async () => {
