@@ -1,8 +1,10 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
+import { DuplicateMemberWarning } from '../../components/members/DuplicateMemberWarning';
 import { Button, Card, Field, Input, Select } from '../../components/ui';
-import { createMember, listGroups, listUsers } from '../../lib/api';
+import { createMember, getDuplicateMemberMatches, listGroups, listUsers } from '../../lib/api';
+import type { DuplicateMemberMatch } from '../../lib/api';
 import type { Group, User } from '../../types';
 
 export default function PastorMemberNew() {
@@ -19,6 +21,7 @@ export default function PastorMemberNew() {
     groupId: '',
   });
   const [error, setError] = useState('');
+  const [duplicateMatches, setDuplicateMatches] = useState<DuplicateMemberMatch[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -31,12 +34,13 @@ export default function PastorMemberNew() {
   }, []);
 
   function set(field: keyof typeof form) {
-    return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      setDuplicateMatches([]);
       setForm((f) => ({ ...f, [field]: e.target.value }));
+    };
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function submit(allowDuplicate = false) {
     if (!form.assignedLeaderId) {
       setError('Please assign this member to a leader.');
       return;
@@ -44,14 +48,21 @@ export default function PastorMemberNew() {
     setError('');
     setSubmitting(true);
     try {
-      const member = await createMember(form);
+      const member = await createMember({ ...form, allowDuplicate });
       navigate(`/pastor/members/${member.id}`);
     } catch (err) {
+      const matches = getDuplicateMemberMatches(err);
+      if (matches.length > 0) setDuplicateMatches(matches);
       const message =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Could not add member.';
-      setError(message);
+      if (matches.length === 0) setError(message);
       setSubmitting(false);
     }
+  }
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    void submit();
   }
 
   return (
@@ -99,6 +110,14 @@ export default function PastorMemberNew() {
           </Field>
 
           {error && <p className="text-body text-concern">{error}</p>}
+          {duplicateMatches.length > 0 && (
+            <DuplicateMemberWarning
+              matches={duplicateMatches}
+              profilePath={(id) => `/pastor/members/${id}`}
+              isSubmitting={submitting}
+              onCreateAnyway={() => void submit(true)}
+            />
+          )}
 
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="secondary" onClick={() => navigate('/pastor/members')}>

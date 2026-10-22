@@ -1,32 +1,44 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
+import { DuplicateMemberWarning } from '../../components/members/DuplicateMemberWarning';
 import { Button, Card, Field, Input } from '../../components/ui';
-import { createMember } from '../../lib/api';
+import { createMember, getDuplicateMemberMatches } from '../../lib/api';
+import type { DuplicateMemberMatch } from '../../lib/api';
 
 export default function LeaderMemberNew() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', email: '', address: '' });
   const [error, setError] = useState('');
+  const [duplicateMatches, setDuplicateMatches] = useState<DuplicateMemberMatch[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   function set(field: keyof typeof form) {
-    return (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [field]: e.target.value }));
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      setDuplicateMatches([]);
+      setForm((f) => ({ ...f, [field]: e.target.value }));
+    };
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function submit(allowDuplicate = false) {
     setError('');
     setSubmitting(true);
     try {
-      const member = await createMember(form);
+      const member = await createMember({ ...form, allowDuplicate });
       navigate(`/leader/members/${member.id}`);
     } catch (err) {
+      const matches = getDuplicateMemberMatches(err);
+      if (matches.length > 0) setDuplicateMatches(matches);
       const message =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Could not add member.';
-      setError(message);
+      if (matches.length === 0) setError(message);
       setSubmitting(false);
     }
+  }
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    void submit();
   }
 
   return (
@@ -52,6 +64,14 @@ export default function LeaderMemberNew() {
           </Field>
 
           {error && <p className="text-body text-concern">{error}</p>}
+          {duplicateMatches.length > 0 && (
+            <DuplicateMemberWarning
+              matches={duplicateMatches}
+              profilePath={(id) => `/leader/members/${id}`}
+              isSubmitting={submitting}
+              onCreateAnyway={() => void submit(true)}
+            />
+          )}
 
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="secondary" onClick={() => navigate('/leader/members')}>

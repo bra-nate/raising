@@ -12,6 +12,36 @@ function auth(user: { id: string; role: 'pastor' | 'leader' }) {
 }
 
 describe('member data integrity', () => {
+  it('requires an audited override for an equivalent phone number', async () => {
+    const leader = await createUser({ role: 'leader' });
+    const existing = await createMember(leader.id);
+    await prisma.member.update({ where: { id: existing.id }, data: { phone: '+233 20 123 4567' } });
+
+    const input = { firstName: 'Possible', lastName: 'Duplicate', phone: '020 123 4567' };
+    const warning = await request(app)
+      .post('/api/v1/members')
+      .set('Authorization', auth(leader))
+      .send(input)
+      .expect(409);
+
+    expect(warning.body.code).toBe('POSSIBLE_DUPLICATE');
+    expect(warning.body.details.matches).toEqual([
+      expect.objectContaining({ id: existing.id, firstName: existing.firstName, lastName: existing.lastName }),
+    ]);
+    expect(await prisma.member.count()).toBe(1);
+
+    const created = await request(app)
+      .post('/api/v1/members')
+      .set('Authorization', auth(leader))
+      .send({ ...input, allowDuplicate: true })
+      .expect(201);
+
+    const log = await prisma.activityLog.findFirstOrThrow({
+      where: { action: 'added_member', entityId: created.body.id },
+    });
+    expect(log.metadata).toMatchObject({ duplicateOverride: true, duplicateMemberIds: [existing.id] });
+  });
+
   it('persists cleared optional fields and group as null', async () => {
     const leader = await createUser({ role: 'leader' });
     const group = await prisma.group.create({ data: { name: 'Group', leaderId: leader.id } });

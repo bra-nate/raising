@@ -16,7 +16,9 @@ router.get(
     const pageSize = req.query.pageSize ? parseInt(String(req.query.pageSize), 10) : undefined;
     const action = typeof req.query.action === 'string' ? req.query.action : undefined;
     const userId = typeof req.query.userId === 'string' ? req.query.userId : undefined;
-    const result = await activityLogService.listLogs({ page, pageSize, action, userId });
+    const from = typeof req.query.from === 'string' ? req.query.from : undefined;
+    const to = typeof req.query.to === 'string' ? req.query.to : undefined;
+    const result = await activityLogService.listLogs({ page, pageSize, action, userId, from, to });
     res.json(result);
   })
 );

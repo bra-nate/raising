@@ -4,7 +4,7 @@ import { AppError } from '../lib/errors';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
   if (err instanceof AppError) {
-    return res.status(err.status).json({ error: err.message, code: err.code });
+    return res.status(err.status).json({ error: err.message, code: err.code, details: err.details });
   }
 
   console.error('Unhandled error:', err);

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, Card } from '../../components/ui';
 import { CasesPanel } from '../../components/cases/CasesPanel';
+import { EditMemberModal } from '../../components/members/EditMemberModal';
 import { IconPlus } from '../../components/ui/icons';
 import { ReportModal } from '../../components/reports/ReportModal';
 import { getMember, listMemberReports } from '../../lib/api';
@@ -16,6 +17,7 @@ export default function LeaderMemberProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -58,10 +60,13 @@ export default function LeaderMemberProfile() {
       subtitle={member.group?.name}
       back={{ to: '/leader/members', label: 'My Members' }}
       actions={
-        <Button variant="primary" onClick={() => setModalOpen(true)}>
-          <IconPlus className="h-4 w-4" />
-          Add report
-        </Button>
+        <>
+          <Button onClick={() => setEditOpen(true)}>Edit member</Button>
+          <Button variant="primary" onClick={() => setModalOpen(true)}>
+            <IconPlus className="h-4 w-4" />
+            Add report
+          </Button>
+        </>
       }
     >
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -121,6 +126,17 @@ export default function LeaderMemberProfile() {
           refresh();
         }}
       />
+
+      {editOpen && (
+        <EditMemberModal
+          member={member}
+          onClose={() => setEditOpen(false)}
+          onSaved={async () => {
+            await refresh();
+            setEditOpen(false);
+          }}
+        />
+      )}
     </AppShell>
   );
 }

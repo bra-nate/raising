@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { AppShell } from '../../components/layout/AppShell';
 import { Badge, Button, Card, Field, Modal, Select } from '../../components/ui';
 import { CasesPanel } from '../../components/cases/CasesPanel';
+import { EditMemberModal } from '../../components/members/EditMemberModal';
 import { PrivacyCard } from '../../components/PrivacyCard';
 import { IconLock, IconPlus } from '../../components/ui/icons';
 import { ReportModal } from '../../components/reports/ReportModal';
@@ -21,6 +22,7 @@ export default function PastorMemberProfile() {
   const [reportOpen, setReportOpen] = useState(false);
   const [redactTarget, setRedactTarget] = useState<MemberReport | null>(null);
   const [preJoinCalls, setPreJoinCalls] = useState<FirstTimerReport[]>([]);
+  const [editOpen, setEditOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -86,10 +88,13 @@ export default function PastorMemberProfile() {
       subtitle={member.assignedLeader?.fullName ? `Led by ${member.assignedLeader.fullName}` : undefined}
       back={{ to: '/pastor/members', label: 'Members' }}
       actions={
-        <Button variant="primary" onClick={() => setReportOpen(true)}>
-          <IconPlus className="h-4 w-4" />
-          Add report
-        </Button>
+        <>
+          <Button onClick={() => setEditOpen(true)}>Edit member</Button>
+          <Button variant="primary" onClick={() => setReportOpen(true)}>
+            <IconPlus className="h-4 w-4" />
+            Add report
+          </Button>
+        </>
       }
     >
       {member.convertedFromFirstTimer?.visitDate && (
@@ -187,6 +192,17 @@ export default function PastorMemberProfile() {
           refresh();
         }}
       />
+
+      {editOpen && (
+        <EditMemberModal
+          member={member}
+          onClose={() => setEditOpen(false)}
+          onSaved={async () => {
+            await refresh();
+            setEditOpen(false);
+          }}
+        />
+      )}
 
       {redactTarget && (
         <RedactModal

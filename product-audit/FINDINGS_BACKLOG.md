@@ -105,6 +105,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-007 — Member duplicate-phone warning promised by the PRD is missing
 
+- **Remediation status (2026-10-22):** Fixed in working tree. Ghana-equivalent phone formats return `409 POSSIBLE_DUPLICATE` with safe match summaries; both create screens offer review or explicit override, and overrides are written to the activity log.
 - **Type:** Missing capability / data quality
 - **Priority:** P2
 - **Persona / journey:** Pastor and leader; add member
@@ -134,6 +135,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-009 — Activity-log investigation workflow is incomplete
 
+- **Remediation status (2026-10-22):** Fixed in working tree. Actor, validated action, and inclusive date filters are URL-backed; results show a privacy-safe subject identifier and retain stable pagination.
 - **Type:** Missing capability / audit usability
 - **Priority:** P2
 - **Persona / journey:** Pastor and superadmin; investigate an event
@@ -163,6 +165,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-011 — Member editing is not exposed despite “manage” requirements
 
+- **Remediation status (2026-10-22):** Fixed in working tree. Pastor and leader profiles share one edit modal for permitted identity/contact fields, send only changed values, persist clearing through the API, and warn before dirty close or browser navigation.
 - **Type:** Missing capability
 - **Priority:** P2
 - **Persona / journey:** Leader and pastor; keep a member record current

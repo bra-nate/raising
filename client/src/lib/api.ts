@@ -245,6 +245,21 @@ export interface MemberInput {
   address?: string;
   assignedLeaderId?: string;
   groupId?: string;
+  allowDuplicate?: boolean;
+}
+
+export interface DuplicateMemberMatch {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  isActive: boolean;
+  assignedLeader: { fullName: string };
+}
+
+export function getDuplicateMemberMatches(error: unknown): DuplicateMemberMatch[] {
+  if (!axios.isAxiosError(error) || error.response?.data?.code !== 'POSSIBLE_DUPLICATE') return [];
+  return error.response.data.details?.matches ?? [];
 }
 
 export async function createMember(input: MemberInput): Promise<Member> {
@@ -304,6 +319,8 @@ export async function listActivityLog(params?: {
   pageSize?: number;
   action?: string;
   userId?: string;
+  from?: string;
+  to?: string;
 }): Promise<ApiList<ActivityLog>> {
   const { data } = await api.get('/activity-log', { params });
   return data;

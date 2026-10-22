@@ -95,6 +95,32 @@ interface CreateMemberInput {
   address?: string;
   groupId?: string;
   assignedLeaderId?: string; // honored for pastor only
+  allowDuplicate?: boolean;
+}
+
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.startsWith('00233')) return digits.slice(2);
+  if (digits.length === 10 && digits.startsWith('0')) return `233${digits.slice(1)}`;
+  return digits;
+}
+
+async function findPhoneMatches(phone?: string) {
+  const normalized = phone ? normalizePhone(phone) : '';
+  if (!normalized) return [];
+
+  const candidates = await prisma.member.findMany({
+    where: { phone: { not: null } },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      isActive: true,
+      assignedLeader: { select: { fullName: true } },
+    },
+  });
+  return candidates.filter((member) => normalizePhone(member.phone!) === normalized).slice(0, 5);
 }
 
 async function assertGroupBelongsToLeader(groupId: string, leaderId: string): Promise<void> {
@@ -123,6 +149,13 @@ async function createMember(user: JwtPayload, input: CreateMemberInput) {
 
   if (input.groupId) await assertGroupBelongsToLeader(input.groupId, assignedLeaderId);
 
+  const phoneMatches = await findPhoneMatches(input.phone);
+  if (phoneMatches.length > 0 && input.allowDuplicate !== true) {
+    throw new AppError(409, 'A member with this phone number may already exist', 'POSSIBLE_DUPLICATE', {
+      matches: phoneMatches,
+    });
+  }
+
   const member = await prisma.member.create({
     data: {
       firstName: input.firstName.trim(),
@@ -141,7 +174,13 @@ async function createMember(user: JwtPayload, input: CreateMemberInput) {
     action: 'added_member',
     entityType: 'member',
     entityId: member.id,
-    metadata: { name: `${member.firstName} ${member.lastName}`, assignedLeaderId },
+    metadata: {
+      name: `${member.firstName} ${member.lastName}`,
+      assignedLeaderId,
+      ...(phoneMatches.length > 0
+        ? { duplicateOverride: true, duplicateMemberIds: phoneMatches.map((match) => match.id) }
+        : {}),
+    },
   });
 
   return member;

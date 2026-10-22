@@ -113,3 +113,11 @@ WP2 and the first WP4 slice added login throttling, security headers/CSP, per-ke
 | `pnpm build` | PASS — server and client production builds; 131 client modules |
 | `git diff --check` | PASS |
 | External boundary | Vercel WAF activation and live monitoring remain operator actions requiring project access |
+
+WP4 and WP5 continuation added normalized duplicate detection with audited override, shared member editing, and server-validated URL-backed activity-log filters.
+
+| Check | Result |
+|---|---|
+| Full backend suite | PASS — 19 files and 162 tests |
+| `pnpm build` | PASS — server and client production builds; 133 client modules |
+| `git diff --check` | PASS |
