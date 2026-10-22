@@ -9,11 +9,13 @@
 
 | Package | Status | Evidence |
 |---|---|---|
-| WP0 — Disposable test database | Complete | `pnpm test` creates isolated PostgreSQL, applies 11 migrations, and ran 140/140 backend tests successfully |
-| WP1 — Current-state authorization | Complete | Five regression cases cover deactivate, demote, promote, administrator reset, and deleted user; full suite and production build pass |
-| WP2–WP9 | Not started | Retain planned order below |
+| WP0 — Disposable test database | Complete | `pnpm test` creates isolated PostgreSQL, applies 11 migrations, and the expanded suite now passes 156/156 |
+| WP1 — Current-state authorization | Complete | Five regression cases cover deactivate, demote, promote, administrator reset, and deleted user; released in `701a2f0` |
+| WP2 — Login abuse controls and headers | Code complete; deployment action open | Tested per-instance throttle, API headers, strict client CSP, and exact Vercel WAF rule documented; WAF activation/monitoring requires project access |
+| WP4 — Settings and member data integrity | In progress | PR-006 and PR-008 fixed with boundary tests; PR-007 duplicate-phone warning remains |
+| WP3, WP5–WP9 | Not started | Retain planned order below |
 
-The first full run produced one transient five-second timeout in the metrics median test. The test passed alone in 105 ms, the second full run passed 140/140, and the final one-command verification also passed 140/140.
+The first full run produced one transient five-second timeout in the metrics median test. It passed alone in 105 ms and every subsequent full run passed. The latest suite contains 18 files and 156 passing tests.
 
 ## Strategy
 

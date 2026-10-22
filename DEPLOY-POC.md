@@ -26,6 +26,8 @@ Use the default Express and Vite framework presets. Vercel detects `server/src/a
 
 For a smoke test, visit `/api/v1/health`, sign in, create a test member, reload, and check that the member persists. Use test data only in this POC.
 
+Before exposing the API, add a Vercel Firewall rate-limit rule for `POST /api/v1/auth/login`: five requests per 15 minutes per source IP, followed by a `429` response. Start the rule in log mode, verify it against legitimate sign-ins, then enable rate limiting. The application also has a per-instance account-and-network backstop, but serverless instances do not share its memory, so the Vercel rule is the production control.
+
 ## Scheduled jobs
 
 Locally, `pnpm dev` still starts `node-cron`. On Vercel, `server/vercel.json` invokes the three daily jobs together at 08:00 UTC through a route protected by `CRON_SECRET`. The hourly safety escalation endpoint is implemented at `/api/v1/internal/cron/hourly` but is **not scheduled** in the POC: Vercel Hobby rejects hourly cron schedules. Before using the deployment for real pastoral or safety cases, use Vercel Pro (add `{ "path": "/api/v1/internal/cron/hourly", "schedule": "0 * * * *" }` to `server/vercel.json`), or arrange an equivalent reliable hourly scheduler. Vercel cron delivery can be delayed or repeated, so verify idempotency and monitoring before production use.

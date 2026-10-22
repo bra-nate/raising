@@ -97,6 +97,13 @@ interface CreateMemberInput {
   assignedLeaderId?: string; // honored for pastor only
 }
 
+async function assertGroupBelongsToLeader(groupId: string, leaderId: string): Promise<void> {
+  const group = await prisma.group.findUnique({ where: { id: groupId }, select: { leaderId: true } });
+  if (!group || group.leaderId !== leaderId) {
+    throw new AppError(400, 'groupId must belong to the assigned leader');
+  }
+}
+
 async function createMember(user: JwtPayload, input: CreateMemberInput) {
   if (!input.firstName?.trim() || !input.lastName?.trim()) {
     throw new AppError(400, 'firstName and lastName are required');
@@ -108,9 +115,13 @@ async function createMember(user: JwtPayload, input: CreateMemberInput) {
   if (user.role === 'pastor') {
     if (!input.assignedLeaderId) throw new AppError(400, 'assignedLeaderId is required');
     const leader = await prisma.user.findUnique({ where: { id: input.assignedLeaderId } });
-    if (!leader || leader.role !== 'leader') throw new AppError(400, 'assignedLeaderId must be a leader');
+    if (!leader || !leader.isActive || leader.role !== 'leader') {
+      throw new AppError(400, 'assignedLeaderId must be an active leader');
+    }
     assignedLeaderId = input.assignedLeaderId;
   }
+
+  if (input.groupId) await assertGroupBelongsToLeader(input.groupId, assignedLeaderId);
 
   const member = await prisma.member.create({
     data: {
@@ -145,6 +156,15 @@ interface UpdateMemberInput {
   groupId?: string;
 }
 
+type MemberUpdateData = {
+  firstName?: string;
+  lastName?: string;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  groupId?: string | null;
+};
+
 async function updateMember(user: JwtPayload, id: string, input: UpdateMemberInput) {
   const existing = await prisma.member.findUnique({ where: { id } });
   if (!existing) throw new AppError(404, 'Member not found');
@@ -152,7 +172,7 @@ async function updateMember(user: JwtPayload, id: string, input: UpdateMemberInp
     throw new AppError(403, 'Forbidden');
   }
 
-  const data: UpdateMemberInput = {};
+  const data: MemberUpdateData = {};
   if (input.firstName !== undefined) {
     if (!input.firstName.trim()) throw new AppError(400, 'firstName cannot be empty');
     data.firstName = input.firstName.trim();
@@ -161,10 +181,13 @@ async function updateMember(user: JwtPayload, id: string, input: UpdateMemberInp
     if (!input.lastName.trim()) throw new AppError(400, 'lastName cannot be empty');
     data.lastName = input.lastName.trim();
   }
-  if (input.phone !== undefined) data.phone = input.phone.trim() || undefined;
-  if (input.email !== undefined) data.email = input.email.trim() || undefined;
-  if (input.address !== undefined) data.address = input.address.trim() || undefined;
-  if (input.groupId !== undefined) data.groupId = input.groupId || undefined;
+  if (input.phone !== undefined) data.phone = input.phone.trim() || null;
+  if (input.email !== undefined) data.email = input.email.trim() || null;
+  if (input.address !== undefined) data.address = input.address.trim() || null;
+  if (input.groupId !== undefined) {
+    if (input.groupId) await assertGroupBelongsToLeader(input.groupId, existing.assignedLeaderId);
+    data.groupId = input.groupId || null;
+  }
 
   if (Object.keys(data).length === 0) throw new AppError(400, 'Nothing to update');
 

@@ -102,3 +102,14 @@ WP0 and WP1 added an isolated PostgreSQL container workflow, a database-name saf
 | Cleanup | Temporary test container and Compose network removed with `pnpm test:db:down` |
 
 The original blocked result above remains the audit-time record. This update demonstrates that backend assertions are now executable; it does not claim that authenticated browser journeys have run.
+
+### Continued remediation verification
+
+WP2 and the first WP4 slice added login throttling, security headers/CSP, per-key settings validation, settings rollback feedback, nullable member-field clearing, and leader/group integrity checks.
+
+| Check | Result |
+|---|---|
+| Full backend suite | PASS — 18 files and 156 tests |
+| `pnpm build` | PASS — server and client production builds; 131 client modules |
+| `git diff --check` | PASS |
+| External boundary | Vercel WAF activation and live monitoring remain operator actions requiring project access |

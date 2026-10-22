@@ -1,5 +1,6 @@
 import { beforeEach, afterAll } from 'vitest';
 import { prisma } from '../lib/prisma';
+import { resetLoginRateLimit } from '../middleware/loginRateLimit';
 
 function assertTestDatabase(): void {
   const raw = process.env.DATABASE_URL;
@@ -19,6 +20,7 @@ export async function resetDb(): Promise<void> {
 }
 
 beforeEach(async () => {
+  resetLoginRateLimit();
   await resetDb();
 });
 

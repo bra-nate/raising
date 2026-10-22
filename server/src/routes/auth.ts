@@ -3,11 +3,13 @@ import { authService } from '../services/auth.service';
 import { authenticate } from '../middleware/authenticate';
 import { asyncHandler } from '../lib/asyncHandler';
 import { AppError } from '../lib/errors';
+import { loginRateLimit } from '../middleware/loginRateLimit';
 
 const router = Router();
 
 router.post(
   '/login',
+  loginRateLimit,
   asyncHandler(async (req, res) => {
     const { email, password } = req.body ?? {};
     if (!email || !password) {

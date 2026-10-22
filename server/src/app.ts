@@ -21,6 +21,17 @@ import { errorHandler } from './middleware/errorHandler';
 export function createApp() {
   const app = express();
 
+  app.disable('x-powered-by');
+  app.use((_req, res, next) => {
+    res.set({
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'Referrer-Policy': 'no-referrer',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+      'Cache-Control': 'no-store',
+    });
+    next();
+  });
   app.use(cors({ origin: config.clientUrl }));
   app.use(express.json());
 

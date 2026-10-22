@@ -22,33 +22,42 @@ async function getNumber(key: string, fallback: number): Promise<number> {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-// Known, writable settings keys — reject anything else.
-const WRITABLE_KEYS = [
-  'reportThresholdDays',
-  'allowDeleteReports',
-  'deletePermission',
-  'notificationsEnabled',
-  'reportReminderDay',
-  'safetyAckHours',
-  'concernDueDays',
-  'firstContactDays',
-  'retentionMonths',
-  'retentionMode',
-] as const;
+const oneOf = (allowed: readonly string[]) => (value: string) => allowed.includes(value);
+const integer = (min: number, max: number) => (value: string) => {
+  if (!/^\d+$/.test(value)) return false;
+  const parsed = Number(value);
+  return parsed >= min && parsed <= max;
+};
+
+// Keep policy constraints at the API boundary; UI controls are not trusted.
+const VALIDATORS = {
+  reportThresholdDays: integer(1, 365),
+  allowDeleteReports: oneOf(['true', 'false']),
+  deletePermission: oneOf(['pastor_only', 'leaders']),
+  notificationsEnabled: oneOf(['true', 'false']),
+  reportReminderDay: oneOf(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']),
+  safetyAckHours: integer(1, 168),
+  concernDueDays: integer(1, 365),
+  firstContactDays: integer(1, 90),
+  retentionMonths: integer(0, 120),
+  retentionMode: oneOf(['report_only', 'report_and_redact']),
+} as const;
 
 async function update(actorId: string, key: string, value: string) {
-  if (!WRITABLE_KEYS.includes(key as (typeof WRITABLE_KEYS)[number])) {
+  const validator = VALIDATORS[key as keyof typeof VALIDATORS];
+  if (!validator) {
     throw new AppError(400, 'Unknown setting');
   }
-  if (typeof value !== 'string' || value.trim() === '') {
-    throw new AppError(400, 'A non-empty value is required');
+  const normalized = value.trim();
+  if (!validator(normalized)) {
+    throw new AppError(400, `Invalid value for ${key}`, 'INVALID_SETTING_VALUE');
   }
 
   const existing = await prisma.setting.findUnique({ where: { key } });
   const updated = await prisma.setting.upsert({
     where: { key },
-    update: { value, updatedById: actorId },
-    create: { key, value, updatedById: actorId },
+    update: { value: normalized, updatedById: actorId },
+    create: { key, value: normalized, updatedById: actorId },
   });
 
   await writeLog({
@@ -56,7 +65,7 @@ async function update(actorId: string, key: string, value: string) {
     action: 'updated_settings',
     entityType: 'settings',
     entityId: key,
-    metadata: { key, from: existing?.value ?? null, to: value },
+    metadata: { key, from: existing?.value ?? null, to: normalized },
   });
 
   return { key: updated.key, value: updated.value };

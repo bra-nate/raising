@@ -236,7 +236,7 @@ function GroupField({ member, onChanged }: { member: Member; onChanged: () => vo
           aria-label="Group"
         >
           <option value="">No group</option>
-          {groups.map((g) => (
+          {groups.filter((g) => g.leaderId === member.assignedLeaderId).map((g) => (
             <option key={g.id} value={g.id}>
               {g.name}
             </option>

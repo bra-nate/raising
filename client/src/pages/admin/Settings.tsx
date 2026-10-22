@@ -11,9 +11,11 @@ const FIELDS: Array<{
   label: string;
   help: string;
   type: 'number' | 'boolean' | 'select';
+  min?: number;
+  max?: number;
   options?: Array<{ value: string; label: string }>;
 }> = [
-  { key: 'reportThresholdDays', label: 'Report threshold (days)', help: 'Days before a member is flagged as unreported.', type: 'number' },
+  { key: 'reportThresholdDays', label: 'Report threshold (days)', help: 'Days before a member is flagged as unreported.', type: 'number', min: 1, max: 365 },
   { key: 'allowDeleteReports', label: 'Allow report deletion', help: 'Master toggle for redact/delete.', type: 'boolean' },
   {
     key: 'deletePermission',
@@ -41,24 +43,32 @@ const FIELDS: Array<{
     label: 'Safety acknowledgement window (hours)',
     help: 'How long a safety case may sit unacknowledged before it escalates to the pastor.',
     type: 'number',
+    min: 1,
+    max: 168,
   },
   {
     key: 'concernDueDays',
     label: 'Concern case due (days)',
     help: 'How long a concern case has before it counts as overdue.',
     type: 'number',
+    min: 1,
+    max: 365,
   },
   {
     key: 'firstContactDays',
     label: 'First contact window (days)',
     help: 'How long after a visit a first-timer may wait for their first call.',
     type: 'number',
+    min: 1,
+    max: 90,
   },
   {
     key: 'retentionMonths',
     label: 'Retention (months)',
     help: 'Months of inactivity before a closed record is flagged for review. 0 retains indefinitely.',
     type: 'number',
+    min: 0,
+    max: 120,
   },
   {
     key: 'retentionMode',
@@ -78,6 +88,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
 
   useEffect(() => {
     getSettings()
@@ -87,11 +98,16 @@ export default function Settings() {
   }, []);
 
   async function save(key: string, value: string) {
+    const previous = values[key] ?? '';
     setSavingKey(key);
+    setError('');
+    setStatus('');
     setValues((v) => ({ ...v, [key]: value }));
     try {
       await updateSetting(key, value);
+      setStatus('Setting saved.');
     } catch {
+      setValues((v) => ({ ...v, [key]: previous }));
       setError(`Could not save ${key}.`);
     } finally {
       setSavingKey(null);
@@ -102,7 +118,10 @@ export default function Settings() {
 
   return (
     <AppShell title="Settings" back={{ to: home, label: 'Dashboard' }}>
-      {error && <p className="mb-4 text-body text-concern">{error}</p>}
+      <div aria-live="polite" aria-atomic="true">
+        {error && <p className="mb-4 text-body text-concern">{error}</p>}
+        {status && <p className="mb-4 text-body text-good">{status}</p>}
+      </div>
       {loading ? (
         <SkeletonRows rows={4} className="p-0" />
       ) : (
@@ -133,6 +152,8 @@ export default function Settings() {
               ) : (
                 <Input
                   type="number"
+                  min={f.min}
+                  max={f.max}
                   value={values[f.key] ?? ''}
                   onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
                   onBlur={(e) => save(f.key, e.target.value)}

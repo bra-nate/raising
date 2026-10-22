@@ -15,7 +15,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-001 — Account changes do not revoke or refresh existing authorization
 
-- **Remediation status (2026-10-22):** Fixed in working tree; current user state is reloaded by shared authentication middleware and five regressions pass. Pending commit/release.
+- **Remediation status (2026-10-22):** Fixed and pushed in `701a2f0`; current user state is reloaded by shared authentication middleware and five regressions pass.
 - **Type:** Security / permission correctness
 - **Priority:** P1
 - **Persona / journey:** All authenticated roles; deactivation, role change, password reset
@@ -58,7 +58,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-004 — No authenticated end-to-end release evidence is currently executable
 
-- **Remediation status (2026-10-22):** Partially fixed. A one-command isolated PostgreSQL workflow now runs all 140 backend tests successfully; authenticated browser E2E coverage remains open under PR-013/WP6 and WP9.
+- **Remediation status (2026-10-22):** Partially fixed. A one-command isolated PostgreSQL workflow now runs all 156 backend tests successfully; authenticated browser E2E coverage remains open under PR-013/WP6 and WP9.
 - **Type:** Verification / release gate
 - **Priority:** P1
 - **Persona / journey:** All roles and all critical journeys
@@ -73,6 +73,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-005 — Public login has no evidenced abuse controls
 
+- **Remediation status (2026-10-22):** Code complete. Five attempts per account/network/window are enforced per instance, `429` includes `Retry-After`, baseline headers and client CSP are present, and regressions pass. The documented Vercel WAF rule still requires activation and monitoring in the project dashboard before this finding is fully closed.
 - **Type:** Security
 - **Priority:** P1
 - **Persona / journey:** All users; sign in
@@ -89,6 +90,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-006 — Settings accept invalid values that can break operating policy
 
+- **Remediation status (2026-10-22):** Fixed in working tree. All ten keys now have server-side enum/integer/range validation with `INVALID_SETTING_VALUE`; the UI supplies native bounds, rolls back failed saves, and announces success/errors. Boundary tests pass.
 - **Type:** Correctness / configuration safety
 - **Priority:** P2
 - **Persona / journey:** Pastor or superadmin; configure policy
@@ -117,6 +119,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-008 — Optional member data and group assignment cannot be cleared
 
+- **Remediation status (2026-10-22):** Fixed in working tree. Empty optional fields and group now persist as `null`; inactive leaders and leader/group mismatches are rejected on the shared write path. Create, update, and clearing regressions pass.
 - **Type:** Functional defect / privacy
 - **Priority:** P2
 - **Persona / journey:** Pastor or leader; correct member data
@@ -145,6 +148,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-010 — JWT is stored in `localStorage` without evidenced CSP hardening
 
+- **Remediation status (2026-10-22):** Partially fixed. API security headers and a strict deployed client CSP are now present, with the inline theme bootstrap moved to a same-origin file. HttpOnly session migration remains WP7.
 - **Type:** Security architecture
 - **Priority:** P2
 - **Persona / journey:** All authenticated roles
