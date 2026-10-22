@@ -5,11 +5,13 @@ import { prisma } from '../lib/prisma';
 import { signToken } from '../lib/jwt';
 import { hashPassword } from '../lib/password';
 import { createUser, seedSettings } from './fixtures';
+import { config } from '../config';
 
 const app = createApp();
 
 describe('forced password change', () => {
   it('blocks every route but the way out, and login says so', async () => {
+    const browser = request.agent(app);
     const password = 'temporary-123';
     const user = await createUser({ role: 'leader' });
     await prisma.user.update({
@@ -17,28 +19,24 @@ describe('forced password change', () => {
       data: { password: await hashPassword(password), mustChangePassword: true },
     });
 
-    const login = await request(app)
+    const login = await browser
       .post('/api/v1/auth/login')
       .send({ email: user.email, password });
     expect(login.status).toBe(200);
     expect(login.body.user.mustChangePassword).toBe(true);
+    expect(login.body.token).toBeUndefined();
 
-    const gated = `Bearer ${login.body.token}`;
-    expect((await request(app).get('/api/v1/members').set('Authorization', gated)).status).toBe(403);
-    expect((await request(app).get('/api/v1/auth/me').set('Authorization', gated)).status).toBe(200);
+    expect((await browser.get('/api/v1/members')).status).toBe(403);
+    expect((await browser.get('/api/v1/auth/me')).status).toBe(200);
 
-    const changed = await request(app)
+    const changed = await browser
       .post('/api/v1/auth/change-password')
-      .set('Authorization', gated)
+      .set('Origin', config.clientUrl)
       .send({ currentPassword: password, newPassword: 'chosen-by-me-1' });
     expect(changed.status).toBe(200);
 
-    // Authorization uses current database state, so both signed tokens now
-    // observe that the holder completed the required change.
     await seedSettings();
-    const fresh = `Bearer ${changed.body.token}`;
-    expect((await request(app).get('/api/v1/members').set('Authorization', fresh)).status).toBe(200);
-    expect((await request(app).get('/api/v1/members').set('Authorization', gated)).status).toBe(200);
+    expect((await browser.get('/api/v1/members')).status).toBe(200);
   });
 
   it('is set by a pastor-issued reset and by account creation', async () => {

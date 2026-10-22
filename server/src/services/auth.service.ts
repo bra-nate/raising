@@ -93,7 +93,7 @@ async function changePassword(userId: string, currentPassword: string, newPasswo
     entityId: userId,
   });
 
-  // The old token still carries the gate claim — hand back a clean one.
+  // Rotate the browser session after a credential change.
   return { token: signToken({ id: user.id, role: user.role, mustChangePassword: false }) };
 }
 

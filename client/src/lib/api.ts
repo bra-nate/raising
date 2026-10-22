@@ -23,27 +23,19 @@ import type {
   UserRole,
 } from '../types';
 
-const TOKEN_KEY = 'sl_token';
-
 export const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL}/api/v1`,
+  withCredentials: true,
 });
 
-// Attach the bearer token from localStorage on every request.
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// Remove credentials created by versions before HttpOnly cookie sessions.
+if (typeof window !== 'undefined') window.localStorage.removeItem('sl_token');
 
-// On 401, clear the token and bounce to login.
+// On 401, bounce to login. The session cookie is not readable by JavaScript.
 api.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem(TOKEN_KEY);
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
@@ -52,14 +44,8 @@ api.interceptors.response.use(
   }
 );
 
-export const tokenStore = {
-  get: () => localStorage.getItem(TOKEN_KEY),
-  set: (token: string) => localStorage.setItem(TOKEN_KEY, token),
-  clear: () => localStorage.removeItem(TOKEN_KEY),
-};
-
 // ── Auth ──────────────────────────────────────
-export async function login(email: string, password: string): Promise<{ token: string; user: AuthUser }> {
+export async function login(email: string, password: string): Promise<{ user: AuthUser }> {
   const { data } = await api.post('/auth/login', { email, password });
   return data;
 }
@@ -69,13 +55,16 @@ export async function getMe(): Promise<AuthUser> {
   return data;
 }
 
-// Returns a fresh token: the old one carries the password-gate claim.
 export async function changePassword(
   currentPassword: string,
   newPassword: string
-): Promise<{ token?: string }> {
+): Promise<void> {
   const { data } = await api.post('/auth/change-password', { currentPassword, newPassword });
   return data;
+}
+
+export async function logout(): Promise<void> {
+  await api.post('/auth/logout');
 }
 
 // ── Privacy ───────────────────────────────────

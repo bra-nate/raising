@@ -9,16 +9,18 @@
 
 | Package | Status | Evidence |
 |---|---|---|
-| WP0 — Disposable test database | Complete | `pnpm test` creates isolated PostgreSQL, applies 12 migrations, and the expanded suite now passes 166/166 |
+| WP0 — Disposable test database | Complete | `pnpm test` creates isolated PostgreSQL, applies 12 migrations, and runs the full backend and client suites |
 | WP1 — Current-state authorization | Complete | Five regression cases cover deactivate, demote, promote, administrator reset, and deleted user; released in `701a2f0` |
 | WP2 — Login abuse controls and headers | Code complete; deployment action open | Tested per-instance throttle, API headers, strict client CSP, and exact Vercel WAF rule documented; WAF activation/monitoring requires project access |
 | WP3 — Safety scheduler and observable email | Code complete; deployment actions open | Configurable verified sender, delivery ledger, bounded retries, provider-outcome tests, and cron logging pass; hourly schedule/provider staging evidence require project access |
 | WP4 — Settings and member data integrity | Complete | Settings, null clearing, assignment integrity, normalized duplicate detection, explicit override, and override audit evidence pass |
 | WP5 — Member editing and audit investigation | Code complete | Shared edit workflow and URL-backed actor/action/date audit filters build; API boundary tests pass; browser certification remains WP9 |
 | WP6 — Scalable rosters and client test foundation | Code complete; certification open | Bounded member/first-timer pages, exact server filters, stable sorting, URL restoration, 3 client tests, and 7 new backend assertions pass; synthetic-volume budgets and Playwright journeys remain |
-| WP7–WP9 | Not started | Retain planned order below |
+| WP7 — Session-storage hardening | Code complete; browser certification open | HttpOnly cookie sessions replace browser-readable bearer storage; exact-origin mutation checks, expiry, forced-password rotation, and logout clearing have server regressions |
+| WP8 | Partially complete | PR-014 and PR-015 are fixed; PR-016 dashboard hierarchy review remains |
+| WP9 | Not started | Cross-role Playwright and production-like release certification remain |
 
-Two full runs have produced isolated five-second timeouts in otherwise fast tests; both passed alone in under 110 ms and the immediate full reruns passed. The latest backend suite contains 21 files and 169 passing tests; the new client suite contains 3 passing tests.
+Two full runs have produced isolated five-second timeouts in otherwise fast tests; both passed alone in under 110 ms and the immediate full reruns passed. The latest backend suite contains 22 files and 172 passing tests; the client suite contains 3 passing tests.
 
 ## Strategy
 

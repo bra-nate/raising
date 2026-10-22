@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { Button, Field, Modal, PasswordInput } from './ui';
-import { changePassword, resetUserPassword, tokenStore } from '../lib/api';
+import { changePassword, resetUserPassword } from '../lib/api';
 
 interface PasswordModalProps {
   open: boolean;
@@ -42,9 +42,7 @@ export function PasswordModal({ open, onClose, target, forced, onDone }: Passwor
       if (target) {
         await resetUserPassword(target.id, next);
       } else {
-        // The returned token drops the password-gate claim the old one carries.
-        const { token } = await changePassword(current, next);
-        if (token) tokenStore.set(token);
+        await changePassword(current, next);
       }
       setDone(true);
       onDone?.();

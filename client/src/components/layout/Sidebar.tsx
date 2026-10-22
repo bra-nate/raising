@@ -149,7 +149,7 @@ export function Sidebar({
             <IconLock className="h-4 w-4" />
           </button>
           <button
-            onClick={logout}
+            onClick={() => void logout()}
             aria-label="Sign out"
             title="Sign out"
             className="flex h-8 w-8 items-center justify-center rounded-pill text-muted transition hover:bg-wash hover:text-concern focus:outline-none focus-visible:shadow-focus"

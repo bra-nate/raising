@@ -32,7 +32,7 @@ export function createApp() {
     });
     next();
   });
-  app.use(cors({ origin: config.clientUrl }));
+  app.use(cors({ origin: config.clientUrl, credentials: true }));
   app.use(express.json());
 
   app.get('/api/v1/health', (_req, res) => {

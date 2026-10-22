@@ -140,3 +140,14 @@ WP6 added capped server pagination, exact roster search/domain filters, stable o
 | Server and client production builds | PASS — 134 client modules |
 | `git diff --check` | PASS |
 | Remaining certification | Synthetic-volume performance budgets and Playwright cross-role journeys |
+
+WP7 replaced browser-readable bearer storage with HttpOnly cookie sessions and exact-origin CSRF protection while preserving current-state authorization and bearer support for non-browser API clients.
+
+| Check | Result |
+|---|---|
+| Full backend suite | PASS — 22 files and 172 tests |
+| Client suite | PASS — 1 file and 3 tests |
+| Session regressions | PASS — credential omitted from JSON, HttpOnly/SameSite cookie, trusted mutation, cross-site rejection, logout clearing, forced-password rotation, and expiry |
+| Server and client production builds | PASS — 134 client modules |
+| `git diff --check` | PASS |
+| Remaining certification | Playwright must confirm cookie visibility, expiry UX, and cross-tab behavior in a real browser |

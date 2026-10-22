@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/authenticate';
 import { asyncHandler } from '../lib/asyncHandler';
 import { AppError } from '../lib/errors';
 import { loginRateLimit } from '../middleware/loginRateLimit';
+import { clearSessionCookie, setSessionCookie } from '../lib/authSession';
 
 const router = Router();
 
@@ -16,12 +17,13 @@ router.post(
       throw new AppError(400, 'Email and password are required');
     }
     const result = await authService.login(String(email).toLowerCase(), String(password));
-    res.json(result);
+    setSessionCookie(res, result.token);
+    res.json({ user: result.user });
   })
 );
 
-// Stateless JWT — client discards the token. Endpoint exists for symmetry.
 router.post('/logout', authenticate, (_req, res) => {
+  clearSessionCookie(res);
   res.json({ ok: true });
 });
 
@@ -47,7 +49,8 @@ router.post(
       String(currentPassword),
       String(newPassword)
     );
-    res.json({ ok: true, ...result });
+    setSessionCookie(res, result.token);
+    res.json({ ok: true });
   })
 );
 

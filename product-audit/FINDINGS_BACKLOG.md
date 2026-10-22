@@ -152,7 +152,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-010 — JWT is stored in `localStorage` without evidenced CSP hardening
 
-- **Remediation status (2026-10-22):** Partially fixed. API security headers and a strict deployed client CSP are now present, with the inline theme bootstrap moved to a same-origin file. HttpOnly session migration remains WP7.
+- **Remediation status (2026-10-22):** Code fixed; browser certification remains. The client no longer receives or stores bearer tokens, authenticated requests use an HttpOnly SameSite cookie, cookie mutations require the exact configured client origin, password changes rotate the cookie, and logout clears it across the browser profile. Cookie, cross-site rejection, expiry, and logout regressions pass.
 - **Type:** Security architecture
 - **Priority:** P2
 - **Persona / journey:** All authenticated roles
@@ -160,7 +160,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 - **Confidence:** High for storage/header facts; medium for exploitability
 - **Steps to reproduce:** Inspect the client token store and response-header configuration.
 - **Expected:** Sensitive sessions use an XSS-resistant strategy or a documented, strong CSP and short-lived/revocable tokens.
-- **Actual:** The bearer token is readable from JavaScript local storage; no Helmet/CSP setup is present in the API or client deployment config.
+- **Actual:** Remediated in code. A one-time compatibility cleanup removes the legacy `sl_token`; JavaScript cannot read the replacement session credential.
 - **Impact:** Any script injection can exfiltrate a seven-day bearer token and pastoral-data access.
 - **Recommended fix:** Prefer secure HttpOnly SameSite cookies with CSRF protection, or use short-lived access tokens held in memory plus revocable refresh cookies. Add CSP and security headers either way.
 - **Acceptance test:** Token is unavailable to page JavaScript; CSRF and XSS regression tests pass; logout/revocation works across tabs.
