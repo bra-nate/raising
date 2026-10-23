@@ -24,35 +24,72 @@ export default function PastorDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  const priority = data
+    ? data.stats.concern > 0
+      ? {
+          count: data.stats.concern,
+          label: 'member concern',
+          description: 'Review the latest concern reports and decide what needs pastoral follow-through.',
+          to: '/pastor/members?status=concern',
+          action: 'Review concerns',
+          tone: 'concern' as const,
+        }
+      : data.stats.needsAttention > 0
+        ? {
+            count: data.stats.needsAttention,
+            label: 'member needing attention',
+            description: 'Start with people whose latest report shows they may need support.',
+            to: '/pastor/members?status=needs_attention',
+            action: 'Review members',
+            tone: 'attention' as const,
+          }
+        : {
+            count: 0,
+            label: 'urgent care items',
+            description: 'Nothing is currently marked as a concern or needing attention.',
+            to: '/pastor/members',
+            action: 'View all members',
+            tone: 'good' as const,
+          }
+    : null;
+
   return (
     <AppShell title="Dashboard" subtitle="Full oversight across every reporting stream.">
-      <p className="mb-6 text-heading font-semibold text-ink-2">Good to see you, {firstName}.</p>
-
       {error ? (
         <p className="text-body text-concern">{error}</p>
       ) : (
         <>
-          {/* Six stat cards */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-            <Stat label="Active members" value={data?.stats.totalActiveMembers} loading={loading} to="/pastor/members" />
-            <Stat label="Reports this week" value={data?.stats.reportsThisWeek} loading={loading} />
-            <Stat
-              label="Needs attention"
-              value={data?.stats.needsAttention}
-              loading={loading}
-              tone="attention"
-              to="/pastor/members?status=needs_attention"
-            />
-            <Stat
-              label="Concern"
-              value={data?.stats.concern}
-              loading={loading}
-              tone="concern"
-              to="/pastor/members?status=concern"
-            />
-            <Stat label="First-timers this week" value={data?.stats.firstTimersThisWeek} loading={loading} />
-            <Stat label="Pending first-timers" value={data?.stats.pendingFirstTimers} loading={loading} />
-          </div>
+          <section className="overflow-hidden rounded-cardlg bg-ink px-6 py-7 text-canvas shadow-feature sm:px-8 sm:py-9">
+            <p className="text-caption font-medium uppercase tracking-[0.16em] text-canvas/65">Good to see you, {firstName}</p>
+            {loading || !priority ? (
+              <div className="mt-5 h-24 animate-pulse rounded-card bg-canvas/10" />
+            ) : (
+              <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+                <div className="max-w-2xl">
+                  <p className={`text-display font-semibold ${priority.tone === 'concern' ? 'text-concern' : priority.tone === 'attention' ? 'text-attention' : 'text-good'}`}>
+                    {priority.count}
+                  </p>
+                  <h2 className="mt-1 text-heading font-semibold text-canvas">
+                    {priority.label}{priority.count === 1 ? '' : 's'}
+                  </h2>
+                  <p className="mt-2 max-w-xl text-body text-canvas/70">{priority.description}</p>
+                </div>
+                <Link
+                  to={priority.to}
+                  className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-btn bg-canvas px-5 py-2.5 text-body font-semibold text-ink transition hover:bg-canvas/90 focus:outline-none focus-visible:shadow-focus"
+                >
+                  {priority.action}
+                </Link>
+              </div>
+            )}
+          </section>
+
+          <dl className="mt-6 grid grid-cols-2 divide-x divide-y divide-hairline border-y border-hairline sm:grid-cols-4 sm:divide-y-0">
+            <Metric label="Active members" value={data?.stats.totalActiveMembers} loading={loading} />
+            <Metric label="Reports this week" value={data?.stats.reportsThisWeek} loading={loading} />
+            <Metric label="First-timers this week" value={data?.stats.firstTimersThisWeek} loading={loading} />
+            <Metric label="Pending follow-up" value={data?.stats.pendingFirstTimers} loading={loading} />
+          </dl>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             {/* Silence panel */}
@@ -132,36 +169,13 @@ export default function PastorDashboard() {
   );
 }
 
-function Stat({
-  label,
-  value,
-  loading,
-  tone,
-  to,
-}: {
-  label: string;
-  value?: number;
-  loading: boolean;
-  tone?: 'attention' | 'concern';
-  to?: string;
-}) {
-  const valueColor = tone === 'concern' ? 'text-concern' : tone === 'attention' ? 'text-attention' : 'text-ink-2';
-  const body = (
-    <>
-      <p className="text-caption text-muted">{label}</p>
-      {loading ? (
-        <div className="mt-2 h-8 w-12 animate-pulse rounded bg-surface-2" />
-      ) : (
-        <p className={`mt-1 text-heading font-semibold ${valueColor}`}>{value ?? 0}</p>
-      )}
-    </>
-  );
-  const cls = 'rounded-card border border-hairline bg-surface p-5 shadow-card';
-  return to ? (
-    <Link to={to} className={`${cls} block transition hover:border-accent/40 hover:shadow-elevated`}>
-      {body}
-    </Link>
-  ) : (
-    <div className={cls}>{body}</div>
+function Metric({ label, value, loading }: { label: string; value?: number; loading: boolean }) {
+  return (
+    <div className="px-4 py-4 first:pl-0 sm:px-6 sm:first:pl-0">
+      <dt className="text-caption text-muted">{label}</dt>
+      <dd className="mt-1 text-heading font-semibold text-ink-2">
+        {loading ? <span className="block h-7 w-10 animate-pulse rounded bg-wash" /> : value ?? 0}
+      </dd>
+    </div>
   );
 }

@@ -234,6 +234,7 @@ Priorities follow the audit brief: P0 blocker, P1 critical, P2 major, P3 minor. 
 
 ### PR-016 — Dashboard visual language is repetitive
 
+- **Remediation status (2026-10-23):** Fixed. Pastor, leader, and follow-up dashboards now lead with one data-driven next action, use compact metric strips instead of repeated statistic cards, and flatten leader/follow-up work lists. Desktop, dark-mode, and 375px browser reviews pass.
 - **Type:** Design quality
 - **Priority:** P3
 - **Location:** authenticated dashboard/list pages

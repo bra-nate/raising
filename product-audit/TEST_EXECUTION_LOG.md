@@ -151,3 +151,14 @@ WP7 replaced browser-readable bearer storage with HttpOnly cookie sessions and e
 | Server and client production builds | PASS — 134 client modules |
 | `git diff --check` | PASS |
 | Remaining certification | Playwright must confirm cookie visibility, expiry UX, and cross-tab behavior in a real browser |
+
+WP8 replaced equal-weight dashboard card grids with a role-specific priority banner, compact metrics, and flatter work lists. The same pass enabled React Router's supported v7 compatibility flags to remove development-console migration warnings.
+
+| Check | Result |
+|---|---|
+| Client suite | PASS — 1 file and 3 tests |
+| Client production build | PASS — 134 client modules |
+| Desktop browser review | PASS — pastor and follow-up priority/action hierarchy, light and dark themes |
+| 375px browser review | PASS — pastor, leader, and follow-up dashboards; no horizontal overflow or hidden primary action |
+| Browser console | PASS — no application or React Router warning after compatibility flags |
+| Seeded local API spot check | Pastor dashboard 20 ms / 7.8 KB; leader roster 15 ms / 5.0 KB; follow-up queue 15 ms / 2.0 KB. This is not a substitute for WP6 synthetic-volume certification. |

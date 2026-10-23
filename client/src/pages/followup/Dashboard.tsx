@@ -48,25 +48,57 @@ export default function FollowUpDashboard() {
     }
   }
 
+  const nextContact = queue?.overdue[0] ?? queue?.callbacks[0] ?? queue?.dueToday[0] ?? queue?.unassigned[0];
+  const nextContactReason = queue?.overdue[0]
+    ? 'This follow-up is overdue.'
+    : queue?.callbacks[0]
+      ? 'A requested callback is due.'
+      : queue?.dueToday[0]
+        ? 'This follow-up is due today.'
+        : 'This visitor still needs an owner.';
+
   return (
     <AppShell
       title="Dashboard"
       subtitle={isLead ? 'The team’s queue and where it stands.' : 'Your queue for today.'}
     >
-      <p className="mb-6 text-heading font-semibold text-ink-2">Welcome, {firstName}.</p>
-
       {error ? (
         <p className="text-body text-concern">{error}</p>
       ) : loading ? (
         <SkeletonRows rows={6} className="p-0" />
       ) : queue ? (
         <>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <section className="rounded-cardlg bg-ink px-6 py-7 text-canvas shadow-feature sm:px-8 sm:py-9">
+            <p className="text-caption font-medium uppercase tracking-[0.16em] text-canvas/65">Welcome, {firstName} · next contact</p>
+            <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              {nextContact ? (
+                <div>
+                  <h2 className="text-heading font-semibold text-canvas">{fullName(nextContact)}</h2>
+                  <p className="mt-2 text-body text-canvas/70">
+                    {nextContactReason} Visited {relativeDate(nextContact.visitDate)}.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <h2 className="text-heading font-semibold text-canvas">The queue is clear</h2>
+                  <p className="mt-2 text-body text-canvas/70">No calls or assignments need attention right now.</p>
+                </div>
+              )}
+              <Link
+                to={nextContact ? `/followup/first-timers/${nextContact.id}` : '/followup/first-timers'}
+                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-btn bg-canvas px-5 py-2.5 text-body font-semibold text-ink transition hover:bg-canvas/90 focus:outline-none focus-visible:shadow-focus"
+              >
+                {nextContact ? 'Open contact' : 'View all first-timers'}
+              </Link>
+            </div>
+          </section>
+
+          <dl className="mt-6 grid grid-cols-2 divide-x divide-y divide-hairline border-y border-hairline sm:grid-cols-4 sm:divide-y-0">
             <Stat label="Due today" value={queue.counts.dueToday} tone="attention" />
             <Stat label="Overdue" value={queue.counts.overdue} tone="concern" />
             <Stat label="Callbacks due" value={queue.counts.callbacks} tone="attention" />
             <Stat label="Unassigned" value={queue.counts.unassigned} />
-          </div>
+          </dl>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <QueueList
@@ -142,10 +174,10 @@ export default function FollowUpDashboard() {
 function Stat({ label, value, tone }: { label: string; value: number; tone?: 'attention' | 'concern' }) {
   const colour = value === 0 ? 'text-ink-2' : tone === 'concern' ? 'text-concern' : tone === 'attention' ? 'text-attention' : 'text-ink-2';
   return (
-    <Card className="p-5">
-      <p className="text-caption uppercase tracking-wide text-faint">{label}</p>
-      <p className={`mt-1 text-heading font-semibold ${colour}`}>{value}</p>
-    </Card>
+    <div className="px-4 py-4 first:pl-0 sm:px-6 sm:first:pl-0">
+      <dt className="text-caption text-muted">{label}</dt>
+      <dd className={`mt-1 text-heading font-semibold ${colour}`}>{value}</dd>
+    </div>
   );
 }
 
@@ -182,9 +214,9 @@ function QueueList({
       {entries.length === 0 ? (
         <p className="text-body text-faint">{empty}</p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="divide-y divide-hairline">
           {entries.map((e) => (
-            <li key={e.id} className="rounded-card border border-hairline px-4 py-3">
+            <li key={e.id} className="py-4 first:pt-0 last:pb-0">
               <div className="flex flex-wrap items-center gap-2">
                 <Link
                   to={`/followup/first-timers/${e.id}`}

@@ -17,7 +17,7 @@
 | WP5 — Member editing and audit investigation | Code complete | Shared edit workflow and URL-backed actor/action/date audit filters build; API boundary tests pass; browser certification remains WP9 |
 | WP6 — Scalable rosters and client test foundation | Code complete; certification open | Bounded member/first-timer pages, exact server filters, stable sorting, URL restoration, 3 client tests, and 7 new backend assertions pass; synthetic-volume budgets and Playwright journeys remain |
 | WP7 — Session-storage hardening | Code complete; browser certification open | HttpOnly cookie sessions replace browser-readable bearer storage; exact-origin mutation checks, expiry, forced-password rotation, and logout clearing have server regressions |
-| WP8 | Partially complete | PR-014 and PR-015 are fixed; PR-016 dashboard hierarchy review remains |
+| WP8 — UI and runtime polish | Complete | Login warnings and mobile targets are fixed; pastor, leader, and follow-up dashboards now lead with one role-specific next action and use compact metric/list treatments |
 | WP9 | Not started | Cross-role Playwright and production-like release certification remain |
 
 Two full runs have produced isolated five-second timeouts in otherwise fast tests; both passed alone in under 110 ms and the immediate full reruns passed. The latest backend suite contains 22 files and 172 passing tests; the client suite contains 3 passing tests.
